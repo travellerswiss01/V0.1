@@ -45,7 +45,7 @@ try{
   state=await (await fetch(base+"/api/state")).json() as any;
   assert.equal(state.pendingApprovals.length,0);
   assert.equal(state.executions.length,1);
-  assert.equal(state.executions[0].status,"completed");
+  if(state.executions[0].status!=="completed") console.error("Control Panel execution error:",state.executions[0].error, state.executions[0].output, logs);\n  assert.equal(state.executions[0].status,"completed");
   assert.equal(state.executions[0].decisionId,pending.decisionId);
 
   console.log(JSON.stringify({status:"passed",pendingBeforeApproval:true,executedAfterApproval:true},null,2));
