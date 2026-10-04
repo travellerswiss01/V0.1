@@ -10,8 +10,8 @@ import type {Decision} from "./types.js";
 
 const testDir=mkdtempSync(join(tmpdir(),"v01-approval-"));
 const previousCwd=process.cwd();
-process.chdir(testDir);
-const memory=new Memory(100);
+
+const memory=new Memory(100,join(testDir,"company-state.json"));
 const decision:Decision={
   id:randomUUID(),
   cycle:1,
@@ -63,5 +63,5 @@ console.log(JSON.stringify({
   executed:true,
   costChf:execution?.costChf
 },null,2));
-process.chdir(previousCwd);
+
 rmSync(testDir,{recursive:true,force:true});
