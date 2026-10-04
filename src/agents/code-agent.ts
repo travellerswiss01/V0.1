@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Decision, ExecutionResult } from "../core/types.js";
+import { createBuildTask } from "./build-task.js";
 import type { BuildTask } from "./build-task.js";
 
 export interface CodeAgentResult {
@@ -63,7 +64,7 @@ export function runCodeAgent(task:BuildTask, decision:Decision):CodeAgentResult 
   };
 }
 
-export function executeCodeAgent(memory:any, decision:Decision):ExecutionResult {
+export function executeCodeAgent(memory:{addExecution:(result:ExecutionResult)=>void}, decision:Decision):ExecutionResult {
   const startedAt=new Date().toISOString();
   if(decision.status!=="approved" || !decision.approved) {
     const result:ExecutionResult={
