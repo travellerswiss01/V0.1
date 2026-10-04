@@ -8,8 +8,8 @@ const repoRoot=resolve(".");
 const testDir=mkdtempSync(join(tmpdir(),"v01-control-panel-"));
 const port=3700+Math.floor(Math.random()*300);
 const child=spawn("npx",["tsx",resolve(repoRoot,"src/server.ts")],{
-  env:{...process.env,PORT:String(port),STARTING_CAPITAL_CHF:"100",CONTROL_PANEL_TEST_MODE:"true",GITHUB_PUBLISH_ENABLED:"false"},
-  cwd:testDir,
+  env:{...process.env,PORT:String(port),STARTING_CAPITAL_CHF:"100",CONTROL_PANEL_TEST_MODE:"true",GITHUB_PUBLISH_ENABLED:"false",COMPANY_STATE_PATH:join(testDir,"company-state.json")},
+  cwd:repoRoot,
   stdio:["ignore","pipe","pipe"]
 });
 let logs="";
