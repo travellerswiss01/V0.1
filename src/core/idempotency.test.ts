@@ -18,5 +18,10 @@ try{
   assert.equal(state.cashChf,90);
   assert.equal(state.costsChf,10);
   assert.equal(returned.id,"execution-1");
+
+  const secondDecision:any={...decision,id:"decision-2",budgetChf:95};
+  memory.addDecision(secondDecision);
+  assert.equal(memory.reservedBudgetChf(),95);
+  assert.equal(memory.availableForExecutionChf(secondDecision.id),-5);
   console.log(JSON.stringify({status:"passed",executions:state.executions.length,cashChf:state.cashChf,costsChf:state.costsChf},null,2));
 }finally{rmSync(dir,{recursive:true,force:true});}
