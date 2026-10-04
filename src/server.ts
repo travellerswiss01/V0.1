@@ -13,14 +13,7 @@ const escapeHtml=(value:unknown)=>{
   return String(value).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 };
 
-const ledger=()=>{
-  const s=memory.snapshot();
-  const rows=[
-    ...s.decisions.map(d=>({time:d.createdAt,type:"DECISION",status:d.status,action:d.action,detail:d.reason})),
-    ...s.executions.map(e=>({time:e.completedAt,type:"EXECUTION",status:e.status,action:e.action,detail:e.output}))
-  ].sort((a,b)=>b.time.localeCompare(a.time));
-  return rows;
-};
+const ledger=()=>memory.getLedger();
 
 const html=()=>{
   const s=memory.snapshot();
