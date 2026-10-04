@@ -36,12 +36,13 @@ function assertWorkspacePath(workspace:string,path:string):string {
   return target;
 }
 
-function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:string;test:string} {
+function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:string;test:string;architecture:string} {
   const workspace=workspaceFor(task);
   mkdirSync(workspace,{recursive:true});
   const readme=join(workspace,"README.md");
   const product=join(workspace,"index.ts");
   const test=join(workspace,"prototype.test.ts");
+  const architecture=join(workspace,"ARCHITECTURE.md");
 
   writeFileSync(readme,[
     "# AI Product Prototype",
@@ -53,6 +54,13 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "## Acceptance criteria",
     ...task.acceptanceCriteria.map(x=>`- ${x}`)
   ].join("\n")+ "\n");
+
+  writeFileSync(architecture,[
+    "# Product Architecture","",
+    "## Objective",task.objective,"",
+    "## Components","- Customer input layer","- Core product logic","- Result/output layer","- Health check and validation","",
+    "## Constraints","- MVP only","- No payments","- No production deployment","- No destructive operations"
+  ].join("\n")+"\n");
 
   writeFileSync(product,[
     "export const product = {",
@@ -72,7 +80,7 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     'console.log("Prototype health check passed.");'
   ].join("\n")+ "\n");
 
-  return {workspace,readme,product,test};
+  return {workspace,readme,product,test,architecture};
 }
 
 function listFiles(root:string):string[] {
@@ -183,7 +191,9 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
       "You may create or modify text/source files only through the provided workspace tools.",
       "Do not use external packages, secrets, network access, deployment, payments, legal actions, or destructive operations.",
       "Keep the prototype self-contained and understandable.",
+      "First inspect the workspace and architecture, then implement the smallest useful runnable prototype for the specification.",
       "You must call validate_prototype before declaring success.",
+      "Use a bounded repair loop: after a validation failure, diagnose the concrete error, make a focused fix, and validate again. Never perform more than 5 repair validations.",
       "If validation fails, inspect the error, fix the code, and validate again.",
       "Do not claim success unless validate_prototype reports ok:true."
     ].join("\n"),
@@ -196,8 +206,9 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
     `Objective: ${task.objective}`,
     "Acceptance criteria:",
     ...task.acceptanceCriteria.map(x=>`- ${x}`),
-    `Workspace: ${workspace}`
-  ].join("\n"),{maxTurns:8});
+    `Workspace: ${workspace}`,
+    "Repair budget: maximum 5 validation/fix iterations."
+  ].join("\n"),{maxTurns:16});
 
   let checks:{build:boolean;test:boolean;prototype:boolean};
   try {
