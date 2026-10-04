@@ -7,7 +7,7 @@ import {executeCodeAgent} from "./agents/code-agent.js";
 import {askCeo} from "./agents/ai-ceo.js";
 
 const port=Number(process.env.PORT||3000);
-const memory=new Memory(Number(process.env.STARTING_CAPITAL_CHF||100));
+const memory=new Memory(Number(process.env.STARTING_CAPITAL_CHF||100),process.env.COMPANY_STATE_PATH||"data/company-state.json");
 
 const escapeHtml=(value:unknown)=>{
   return String(value).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
