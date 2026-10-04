@@ -41,6 +41,6 @@ export function runCeoCycle(memory:Memory):Decision {
   };
   memory.addDecision(decision);
 
-  if(decision.status==="approved") executeCodeAgent(memory,decision);
+  if(decision.status==="approved" && process.env.CODE_AGENT_VALIDATION!=="1") executeCodeAgent(memory,decision);
   return decision;
 }
