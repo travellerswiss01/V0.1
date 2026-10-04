@@ -6,6 +6,7 @@ import {Memory} from "../core/memory.js";
 import {research} from "./research.js";
 import {executeCodeAgent} from "./code-agent.js";
 import {classifyRisk,requiresApproval} from "../core/policy.js";
+import {createProductSpecification} from "./product-spec.js";
 
 function decisionScore(opportunity:Opportunity,cashChf:number):number {
   const budgetFit=opportunity.estimatedCostChf<=cashChf?15:-40;
@@ -101,6 +102,12 @@ export class CeoToolService {
     };
   }
 
+  createProductSpec(decisionId:string){
+    const decision=this.memory.snapshot().decisions.find(item=>item.id===decisionId);
+    if(!decision) throw new Error("Decision not found.");
+    return createProductSpecification(this.memory,decision);
+  }
+
   async buildProduct(decisionId:string){
     const decision=this.memory.snapshot().decisions.find(item=>item.id===decisionId);
     if(!decision) throw new Error("Decision not found.");
@@ -148,6 +155,7 @@ export function createCeoTools(memory:Memory){
     tool({name:"analyze_opportunity",description:"Analyze an opportunity against current cash, speed, margin and risk policy.",parameters:z.object({opportunityId:z.string()}),execute:async({opportunityId})=>service.analyzeOpportunity(opportunityId)}),
     tool({name:"create_decision",description:"Create a decision for an existing opportunity. This never bypasses policy or budget gates.",parameters:z.object({opportunityId:z.string()}),execute:async({opportunityId})=>service.createDecision(opportunityId)}),
     tool({name:"request_approval",description:"Request human approval for a pending decision. This tool cannot approve its own decision.",parameters:z.object({decisionId:z.string()}),execute:async({decisionId})=>service.requestApproval(decisionId)}),
+    tool({name:"create_product_spec",description:"Create the structured product specification for an existing decision before building.",parameters:z.object({decisionId:z.string()}),execute:async({decisionId})=>service.createProductSpec(decisionId)}),
     tool({name:"build_product",description:"Build a product only for an explicitly approved decision. Budget and execution-lock controls remain enforced by the coding agent.",parameters:z.object({decisionId:z.string()}),execute:async({decisionId})=>service.buildProduct(decisionId)}),
     tool({name:"run_tests",description:"Read validation results for an existing product execution.",parameters:z.object({decisionId:z.string()}),execute:async({decisionId})=>service.runTests(decisionId)}),
     tool({name:"publish",description:"Verify guarded GitHub draft publication for a completed approved execution. This tool never merges or deploys production.",parameters:z.object({decisionId:z.string()}),execute:async({decisionId})=>service.publish(decisionId)}),
