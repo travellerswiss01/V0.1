@@ -1,4 +1,4 @@
-import {mkdirSync,openSync,closeSync,unlinkSync,existsSync,readFileSync} from "node:fs";
+import {mkdirSync,openSync,closeSync,unlinkSync,existsSync,readFileSync,writeFileSync} from "node:fs";
 import {dirname} from "node:path";
 
 export class ExecutionLock {
@@ -15,6 +15,7 @@ export class ExecutionLock {
     try{
       const fd=openSync(this.path,"wx");
       closeSync(fd);
+      writeFileSync(this.path,owner,"utf8");
       this.acquired=true;
       return true;
     }catch(error){
