@@ -33,11 +33,13 @@ function assertWorkspacePath(workspace:string,path:string):string {
   return target;
 }
 
-function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:string} {
+function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:string;test:string} {
   const workspace=workspaceFor(task);
   mkdirSync(workspace,{recursive:true});
   const readme=join(workspace,"README.md");
   const product=join(workspace,"index.ts");
+  const test=join(workspace,"prototype.test.ts");
+
   writeFileSync(readme,[
     "# AI Product Prototype",
     "",
@@ -48,8 +50,9 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "## Acceptance criteria",
     ...task.acceptanceCriteria.map(x=>`- ${x}`)
   ].join("\n")+"\n");
+
   writeFileSync(product,[
-    `export const product = {`,
+    "export const product = {",
     `  name: ${JSON.stringify(task.title)},`,
     `  opportunityId: ${JSON.stringify(task.opportunityId)},`,
     `  objective: ${JSON.stringify(task.objective)}`,
@@ -57,7 +60,16 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "",
     "export function healthCheck():boolean { return Boolean(product.name && product.opportunityId); }"
   ].join("\n")+"\n");
-  return {workspace,readme,product};
+
+  writeFileSync(test,[
+    'import {strict as assert} from "node:assert";',
+    'import {healthCheck} from "./index.js";',
+    "",
+    'assert.equal(healthCheck(),true);',
+    'console.log("Prototype health check passed.");'
+  ].join("\n")+"\n");
+
+  return {workspace,readme,product,test};
 }
 
 function listFiles(root:string):string[] {
@@ -77,16 +89,24 @@ function validatePrototype(workspace:string):{build:boolean;test:boolean;prototy
   let build=false;
   let test=false;
   let prototype=false;
+
+  // Validate the company repository, but never run the repository smoke test here.
+  // The smoke test starts its own Control Panel server; running it from inside
+  // the Control Panel approval test creates a recursive test-server collision.
   execFileSync("npm",["run","build"],{stdio:"pipe",timeout:120000});
   build=true;
-  execFileSync("npm",["run","test:smoke"],{stdio:"pipe",timeout:120000});
-  test=true;
+
   const tsFiles=listFiles(workspace).filter(file=>file.endsWith(".ts"));
   if(tsFiles.length===0) throw new Error("Prototype validation failed: no TypeScript source was created.");
+
   execFileSync("npx",[
     "tsc","--noEmit","--target","ES2022","--module","NodeNext","--moduleResolution","NodeNext",...tsFiles
   ],{cwd:workspace,stdio:"pipe",timeout:120000});
   prototype=true;
+
+  execFileSync("npx",["tsx","prototype.test.ts"],{cwd:workspace,stdio:"pipe",timeout:120000});
+  test=true;
+
   return {build,test,prototype};
 }
 
@@ -102,7 +122,7 @@ export async function runDeterministicCodeAgent(task:BuildTask):Promise<CodeAgen
     checks,
     mode:"deterministic",
     github,
-    output:`Deterministic coding agent created ${seeded.workspace}, passed repository build, smoke test and prototype TypeScript validation${github?" and published a guarded GitHub draft PR.":"."}`
+    output:`Deterministic coding agent created ${seeded.workspace}, passed repository build, prototype TypeScript validation and prototype health test${github?" and published a guarded GitHub draft PR.":"."}`
   };
 }
 
@@ -139,7 +159,7 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
 
   const validateTool=tool({
     name:"validate_prototype",
-    description:"Run the repository build, smoke tests, and TypeScript validation for the generated prototype. Fix failures before trying again.",
+    description:"Run the repository build and the prototype TypeScript/health checks. Do not run the repository smoke test.",
     parameters:z.object({}),
     execute:async()=>{
       try {
