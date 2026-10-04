@@ -9,7 +9,7 @@ export interface Opportunity {
   estimatedCostChf:number; competition:"low"|"medium"|"high"; automation:number;
   score:number; rationale:string;
 }
-export interface Decision {
+export interface ProductSpecification {\n  id:string; decisionId:string; opportunityId:string; createdAt:string;\n  targetCustomer:string; problem:string; valueProposition:string;\n  features:string[]; userFlow:string[]; acceptanceCriteria:string[];\n  pricingChf:number; mvpScope:string[]; outOfScope:string[];\n}\nexport interface Decision {
   id:string; cycle:number; action:string; reason:string; expectedOutcome:string;
   confidence:number; risk:RiskLevel; approved:boolean; createdAt:string;
   opportunityId:string; opportunityScore:number; alternatives:string[];
