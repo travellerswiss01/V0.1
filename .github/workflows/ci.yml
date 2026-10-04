@@ -27,3 +27,4 @@ jobs:
       - run: npm run test:ceo-tools
       - run: npm run test:ceo-loop
       - run: npm run test:code-agent-2
+      - run: npm run test:code-review
