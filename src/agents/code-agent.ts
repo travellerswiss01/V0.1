@@ -216,7 +216,9 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
   };
 }
 
-export async function executeCodeAgent(memory:{addExecution:(result:ExecutionResult)=>void},decision:Decision):Promise<ExecutionResult> {
+export async function executeCodeAgent(memory:{addExecution:(result:ExecutionResult)=>ExecutionResult|void;getExecutionByDecisionId?:(decisionId:string)=>ExecutionResult|undefined},decision:Decision):Promise<ExecutionResult> {
+  const existing=memory.getExecutionByDecisionId?.(decision.id);
+  if(existing)return existing;
   const startedAt=new Date().toISOString();
   if(decision.status!=="approved"||!decision.approved){
     const result:ExecutionResult={
