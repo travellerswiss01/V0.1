@@ -4,6 +4,7 @@ import {join,relative,resolve} from "node:path";
 import {Agent,run,tool} from "@openai/agents";
 import {z} from "zod";
 import type {Decision,ExecutionResult} from "../core/types.js";
+import {classifyFailure,nextRetry} from "../core/failure.js";
 import {createBuildTask} from "./build-task.js";
 import type {BuildTask} from "./build-task.js";
 import {publishWorkspaceToGitHub} from "./github-publisher.js";
@@ -216,45 +217,84 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
   };
 }
 
-export async function executeCodeAgent(memory:{addExecution:(result:ExecutionResult)=>ExecutionResult|void;getExecutionByDecisionId?:(decisionId:string)=>ExecutionResult|undefined},decision:Decision):Promise<ExecutionResult> {
+export async function executeCodeAgent(memory:{
+  addExecution:(result:ExecutionResult)=>ExecutionResult|void;
+  getExecutionByDecisionId?:(decisionId:string)=>ExecutionResult|undefined;
+  recordFailure?:(decisionId:string,action:string,risk:Decision["risk"],budgetChf:number,entry:{
+    type:"execution_failed"|"execution_retry_scheduled"|"execution_recovered";
+    status:string; detail:string;
+  })=>void;
+},decision:Decision):Promise<ExecutionResult> {
   const existing=memory.getExecutionByDecisionId?.(decision.id);
   if(existing)return existing;
+
   const startedAt=new Date().toISOString();
+  const maxAttempts=3;
+
   if(decision.status!=="approved"||!decision.approved){
     const result:ExecutionResult={
       id:decision.id,decisionId:decision.id,status:"blocked",action:decision.action,
       startedAt,completedAt:new Date().toISOString(),costChf:0,
-      output:"Code-agent execution blocked: decision is not approved."
+      output:"Code-agent execution blocked: decision is not approved.",
+      attempt:1,maxAttempts
     };
     memory.addExecution(result);
     return result;
   }
-  try {
-    const task=createBuildTask(decision);
-    const aiEnabled=process.env.AI_CODING_AGENT_ENABLED==="true";
-    const result=aiEnabled?await runAiCodeAgent(task):await runDeterministicCodeAgent(task);
-    const execution:ExecutionResult={
-      id:decision.id,decisionId:decision.id,status:"completed",action:decision.action,
-      startedAt,completedAt:new Date().toISOString(),costChf:decision.budgetChf,
-      output:result.output,
-      artifacts:{
-        workspace:result.workspace,
-        files:result.files,
-        checks:result.checks,
-        mode:result.mode,
-        github:result.github
+
+  for(let attempt=1;attempt<=maxAttempts;attempt++){
+    try{
+      const task=createBuildTask(decision);
+      const aiEnabled=process.env.AI_CODING_AGENT_ENABLED==="true";
+      const result=aiEnabled?await runAiCodeAgent(task):await runDeterministicCodeAgent(task);
+      const execution:ExecutionResult={
+        id:decision.id,decisionId:decision.id,status:"completed",action:decision.action,
+        startedAt,completedAt:new Date().toISOString(),costChf:decision.budgetChf,
+        output:result.output,
+        attempt,maxAttempts,
+        artifacts:{
+          workspace:result.workspace,
+          files:result.files,
+          checks:result.checks,
+          mode:result.mode,
+          github:result.github
+        }
+      };
+      if(attempt>1){
+        memory.recordFailure?.(decision.id,decision.action,decision.risk,decision.budgetChf,{
+          type:"execution_recovered",status:"recovered",
+          detail:`Execution recovered successfully on attempt ${attempt}/${maxAttempts}.`
+        });
       }
-    };
-    memory.addExecution(execution);
-    return execution;
-  } catch(error) {
-    const execution:ExecutionResult={
-      id:decision.id,decisionId:decision.id,status:"failed",action:decision.action,
-      startedAt,completedAt:new Date().toISOString(),costChf:0,
-      output:"Code-agent execution failed.",
-      error:error instanceof Error?error.message:String(error)
-    };
-    memory.addExecution(execution);
-    return execution;
+      memory.addExecution(execution);
+      return execution;
+    }catch(error){
+      const classification=classifyFailure(error);
+      const retry=nextRetry(attempt,maxAttempts,classification);
+      memory.recordFailure?.(decision.id,decision.action,decision.risk,decision.budgetChf,{
+        type:"execution_failed",status:classification.code,
+        detail:`Attempt ${attempt}/${maxAttempts} failed: ${error instanceof Error?error.message:String(error)} Recovery: ${classification.recoveryAction}`
+      });
+
+      if(retry.retry){
+        memory.recordFailure?.(decision.id,decision.action,decision.risk,decision.budgetChf,{
+          type:"execution_retry_scheduled",status:"retry_scheduled",
+          detail:`Bounded retry scheduled after attempt ${attempt}/${maxAttempts}; failure code ${classification.code}.`
+        });
+        continue;
+      }
+
+      const execution:ExecutionResult={
+        id:decision.id,decisionId:decision.id,status:"failed",action:decision.action,
+        startedAt,completedAt:new Date().toISOString(),costChf:0,
+        output:`Code-agent execution failed after ${attempt}/${maxAttempts} attempt(s).`,
+        error:error instanceof Error?error.message:String(error),
+        attempt,maxAttempts,failureCode:classification.code,retryable:classification.retryable
+      };
+      memory.addExecution(execution);
+      return execution;
+    }
   }
+
+  throw new Error("Failure engine exhausted without producing an execution result.");
 }
