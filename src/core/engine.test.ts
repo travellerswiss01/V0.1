@@ -21,7 +21,7 @@ assert.equal(decision.budgetChf, selected?.estimatedCostChf);
 assert.equal(decision.status, "approved", "Affordable prototype decision should be approved");
 assert.equal(state.executions.length, 1, "Approved decision must execute");
 assert.equal(state.executions[0].status, "completed", "Execution must complete");
-assert.match(state.executions[0].output, /Product-build agent generated a local prototype scaffold/, "Execution must invoke product builder");
+assert.match(state.executions[0].output, /Code agent created/, "Execution must invoke coding agent");
 assert.equal(state.executions[0].decisionId, decision.id);
 assert.equal(state.costsChf, selected?.estimatedCostChf);
 assert.equal(state.cashChf, 100-(selected?.estimatedCostChf??0));
