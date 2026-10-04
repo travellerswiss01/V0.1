@@ -13,7 +13,8 @@
     "test:approval": "tsx src/core/approval.test.ts",
     "test:control-panel": "tsx src/core/control-panel-approval.test.ts",
     "test:idempotency": "tsx src/core/idempotency.test.ts",
-    "test:lock": "tsx src/core/execution-lock.test.ts"
+    "test:lock": "tsx src/core/execution-lock.test.ts",
+    "test:budget": "tsx src/core/budget.test.ts"
   },
   "dependencies": {
     "@openai/agents": "^0.18.0",
