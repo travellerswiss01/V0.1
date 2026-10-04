@@ -6,6 +6,7 @@ const memory = new Memory(100);
 const decision = await runCeoCycle(memory);
 const state = memory.snapshot();
 const execution = state.executions.find(item => item.decisionId === decision.id);
+if (execution?.status === "failed") console.error("E2E execution error:", execution.error);
 
 assert.ok(execution, "CEO cycle must create an execution result");
 assert.equal(execution?.status, "completed", "E2E execution must complete");
