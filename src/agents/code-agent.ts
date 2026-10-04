@@ -299,5 +299,6 @@ export async function executeCodeAgent(memory:{
     }
   }
 
+  throw new Error("Failure engine exhausted without producing an execution result.");
   });
 }
