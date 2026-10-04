@@ -49,7 +49,7 @@ export function runCodeAgent(task:BuildTask, decision:Decision):CodeAgentResult 
   try {
     execFileSync("npm",["run","build"],{stdio:"pipe",timeout:120000});
     build=true;
-    execFileSync("npm",["test"],{stdio:"pipe",timeout:120000});
+    execFileSync("npm",["test"],{stdio:"pipe",timeout:120000,env:{...process.env,CODE_AGENT_VALIDATION:"1"}});
     test=true;
   } catch (error) {
     const message=error instanceof Error?error.message:String(error);
