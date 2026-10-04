@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
+import process from "node:process";
 import {mkdtempSync,rmSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join,resolve} from "node:path";
@@ -10,7 +11,8 @@ const port=3700+Math.floor(Math.random()*300);
 const child=spawn("npx",["tsx",resolve(repoRoot,"src/server.ts")],{
   env:{...process.env,PORT:String(port),STARTING_CAPITAL_CHF:"100",CONTROL_PANEL_TEST_MODE:"true",GITHUB_PUBLISH_ENABLED:"false",COMPANY_STATE_PATH:join(testDir,"company-state.json")},
   cwd:repoRoot,
-  stdio:["ignore","pipe","pipe"]
+  stdio:["ignore","pipe","pipe"],
+  detached:true
 });
 let logs="";
 child.stdout.on("data",c=>logs+=c.toString());
@@ -51,7 +53,12 @@ try{
 
   console.log(JSON.stringify({status:"passed",pendingBeforeApproval:true,executedAfterApproval:true},null,2));
 } finally {
-  child.kill("SIGTERM");
-  await wait(100);
+  if(child.pid){
+    try{process.kill(-child.pid,"SIGTERM");}catch{}
+    await wait(500);
+    try{process.kill(-child.pid,"SIGKILL");}catch{}
+  }else{
+    child.kill("SIGTERM");
+  }
   rmSync(testDir,{recursive:true,force:true});
 }
