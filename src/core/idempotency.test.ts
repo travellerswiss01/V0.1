@@ -18,6 +18,10 @@ try{
   assert.equal(state.cashChf,90);
   assert.equal(state.costsChf,10);
   assert.equal(returned.id,"execution-1");
+  const ledger=memory.getLedger();
+  assert.equal(ledger.filter(e=>e.decisionId===decision.id).length,2);
+  assert.equal(ledger[0]?.type,"execution_recorded");
+  assert.equal(ledger[1]?.type,"decision_created");
 
   const secondDecision:any={...decision,id:"decision-2",budgetChf:95};
   memory.addDecision(secondDecision);
