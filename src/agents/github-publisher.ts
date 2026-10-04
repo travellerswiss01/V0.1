@@ -74,7 +74,7 @@ export async function publishWorkspaceToGitHub(
   const c=config();
   const base=await github<GitHubCommit>(`/repos/${c.owner}/${c.repo}/git/ref/heads/${c.baseBranch}`);
   const baseSha=base.sha;
-  const baseCommit=await github<{object:{sha:string}}>(`/repos/${c.owner}/${c.repo}/git/commits/${baseSha}`);
+  const baseCommit=await github<{sha:string;commit:{tree:{sha:string}}}>(`/repos/${c.owner}/${c.repo}/commits/${baseSha}`);
   const branch=branchName(decisionId);
 
   await github(`/repos/${c.owner}/${c.repo}/git/refs`,{
@@ -91,7 +91,7 @@ export async function publishWorkspaceToGitHub(
 
   const tree=await github<GitHubTree>(`/repos/${c.owner}/${c.repo}/git/trees`,{
     method:"POST",
-    body:JSON.stringify({base_tree:baseCommit.object.sha,tree:treeItems})
+    body:JSON.stringify({base_tree:baseCommit.commit.tree.sha,tree:treeItems})
   });
 
   const commit=await github<GitHubCommit>(`/repos/${c.owner}/${c.repo}/git/commits`,{
