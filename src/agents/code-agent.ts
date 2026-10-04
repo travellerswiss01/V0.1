@@ -9,6 +9,7 @@ import {createBuildTask} from "./build-task.js";
 import type {BuildTask} from "./build-task.js";
 import {publishWorkspaceToGitHub} from "./github-publisher.js";
 import {ExecutionLock,withExecutionLock} from "../core/execution-lock.js";
+import type {Memory} from "../core/memory.js";
 
 export interface CodeAgentResult {
   workspace:string;
@@ -259,7 +260,7 @@ export async function executeCodeAgent(memory:{
   }
   for(let attempt=1;attempt<=maxAttempts;attempt++){
     try{
-      const task=createBuildTask(decision);
+      const task=createBuildTask(decision,memory as Memory);
       const aiEnabled=process.env.AI_CODING_AGENT_ENABLED==="true";
       const result=aiEnabled?await runAiCodeAgent(task):await runDeterministicCodeAgent(task);
       const execution:ExecutionResult={
