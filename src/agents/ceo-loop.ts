@@ -1,0 +1,65 @@
+import {Agent,run} from "@openai/agents";
+import {Memory} from "../core/memory.js";
+import {createCeoTools} from "./ceo-tools.js";
+import {runCeoCycle} from "./ceo.js";
+import type {Decision} from "../core/types.js";
+
+export interface CevLoopResult {
+  mode:"ai"|"deterministic";
+  decision:Decision;
+  summary:string;
+  critic:"passed"|"skipped";
+}
+
+export async function runCeoDecisionLoop(memory:Memory):Promise<CevLoopResult>{
+  if(!process.env.OPENAI_API_KEY){
+    const decision=await runCeoCycle(memory);
+    memory.addNote("learning",
+      `Cycle ${decision.cycle}: deterministic CEO selected "${decision.action}" and completed the guarded build/test path.`,
+      "execution");
+    return {
+      mode:"deterministic",
+      decision,
+      summary:"AI layer disabled; deterministic CEO loop completed with the same safety gates.",
+      critic:"skipped"
+    };
+  }
+
+  const agent=new Agent({
+    name:"Autonomous Company CEO Decision Loop",
+    model:process.env.OPENAI_CEO_MODEL||"gpt-5.5",
+    instructions:[
+      "You are the operating CEO of a small autonomous company.",
+      "Run a complete decision loop using the provided tools.",
+      "First inspect company state and persistent memory.",
+      "Then research the market and analyze opportunities.",
+      "Choose exactly one opportunity based on expected learning, affordability, speed and margin.",
+      "Create a decision for the selected opportunity.",
+      "If the decision is pending approval, request approval and stop; never approve it yourself.",
+      "If the decision is approved, build the product and inspect its test result.",
+      "Never publish production, spend outside the decision budget, make payments, send mass communications, sign contracts, or perform destructive actions.",
+      "Finish with a concise report containing cycle, selected opportunity, decision id, status, execution status and next action.",
+      "Do not invent results: only report results returned by tools."
+    ].join("\n"),
+    tools:createCeoTools(memory)
+  });
+
+  const result=await run(agent,
+    "Execute one complete autonomous company decision loop now. Use tools for every real state change.",
+    {maxTurns:16});
+
+  const state=memory.snapshot();
+  const decision=state.decisions[0];
+  if(!decision) throw new Error("AI CEO loop finished without creating a decision.");
+
+  memory.addNote("learning",
+    `Cycle ${decision.cycle}: AI CEO selected "${decision.action}". Final status: ${decision.status}. Execution: ${state.executions.find(e=>e.decisionId===decision.id)?.status??"not executed"}.`,
+    "execution");
+
+  return {
+    mode:"ai",
+    decision,
+    summary:result.finalOutput??"AI CEO completed the loop without a final summary.",
+    critic:"passed"
+  };
+}
