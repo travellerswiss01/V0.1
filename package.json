@@ -16,7 +16,8 @@
     "test:lock": "tsx src/core/execution-lock.test.ts",
     "test:budget": "tsx src/core/budget.test.ts",
     "test:memory": "tsx src/core/memory.test.ts",
-    "test:ceo-tools": "tsx src/core/ceo-tools.test.ts"
+    "test:ceo-tools": "tsx src/core/ceo-tools.test.ts",
+    "test:ceo-loop": "tsx src/core/ceo-loop.test.ts"
   },
   "dependencies": {
     "@openai/agents": "^0.18.0",
