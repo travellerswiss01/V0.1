@@ -3,7 +3,7 @@ import {classifyRisk,requiresApproval} from "../core/policy.js";
 import type {Decision,Opportunity} from "../core/types.js";
 import {research} from "./research.js";
 import {Memory} from "../core/memory.js";
-import {executeBuild} from "./product-builder.js";
+import {executeCodeAgent} from "./code-agent.js";
 
 function evaluate(opportunity:Opportunity, cashChf:number):number {
   const budgetFit = opportunity.estimatedCostChf <= cashChf ? 15 : -40;
@@ -41,6 +41,6 @@ export function runCeoCycle(memory:Memory):Decision {
   };
   memory.addDecision(decision);
 
-  if(decision.status==="approved") executeBuild(memory,decision);
+  if(decision.status==="approved") executeCodeAgent(memory,decision);
   return decision;
 }
