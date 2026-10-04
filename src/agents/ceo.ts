@@ -3,6 +3,7 @@ import {classifyRisk,requiresApproval} from "../core/policy.js";
 import type {Decision,Opportunity} from "../core/types.js";
 import {research} from "./research.js";
 import {Memory} from "../core/memory.js";
+import {executeDecision} from "./executor.js";
 
 function evaluate(opportunity:Opportunity, cashChf:number):number {
   const budgetFit = opportunity.estimatedCostChf <= cashChf ? 15 : -40;
@@ -15,8 +16,9 @@ export function runCeoCycle(memory:Memory):Decision {
   memory.nextCycle();
   const state = memory.snapshot();
   const candidates = research();
+  memory.setOpportunities(candidates);
   const ranked = candidates
-    .map(opportunity => ({opportunity, decisionScore:evaluate(opportunity,state.cashChf)}))
+    .map(opportunity => ({opportunity,decisionScore:evaluate(opportunity,state.cashChf)}))
     .sort((a,b)=>b.decisionScore-a.decisionScore);
 
   const top = ranked[0].opportunity;
@@ -29,14 +31,16 @@ export function runCeoCycle(memory:Memory):Decision {
   const status = !affordable ? "rejected" : approved ? "approved" : "pending_approval";
 
   const decision:Decision={
-    id:randomUUID(), cycle:state.cycle, action,
+    id:randomUUID(),cycle:state.cycle,action,
     reason:`Selected from ${candidates.length} candidates. Decision score ${evaluate(top,state.cashChf)}. ${top.rationale}`,
     expectedOutcome:`Validate demand for CHF ${top.priceChf} offer within ${top.mvpDays} day(s), with a maximum test budget of CHF ${budget}.`,
     confidence:Math.min(.97,.55+Math.max(0,top.score)/300),
-    risk, approved, createdAt:new Date().toISOString(),
-    opportunityId:top.id, opportunityScore:top.score, alternatives,
-    budgetChf:budget, status
+    risk,approved,createdAt:new Date().toISOString(),
+    opportunityId:top.id,opportunityScore:top.score,alternatives,
+    budgetChf:budget,status
   };
   memory.addDecision(decision);
+
+  if(decision.status==="approved") executeDecision(memory,decision);
   return decision;
 }
