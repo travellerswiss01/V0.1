@@ -6,6 +6,7 @@ import {z} from "zod";
 import type {Decision,ExecutionResult} from "../core/types.js";
 import {createBuildTask} from "./build-task.js";
 import type {BuildTask} from "./build-task.js";
+import {publishWorkspaceToGitHub} from "./github-publisher.js";
 
 export interface CodeAgentResult {
   workspace:string;
@@ -13,6 +14,7 @@ export interface CodeAgentResult {
   checks:{build:boolean;test:boolean;prototype:boolean};
   mode:"ai"|"deterministic";
   output:string;
+  github?:{branch:string;commitSha:string;prNumber:number;prUrl:string};
 }
 
 function safeSlug(value:string):string {
@@ -177,11 +179,15 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
     throw new Error(`AI coding agent final validation failed: ${error instanceof Error?error.message:String(error)}`);
   }
 
+  const github=process.env.GITHUB_PUBLISH_ENABLED==="true"
+    ?await publishWorkspaceToGitHub(workspace,task.id,task.title,task.objective)
+    :undefined;
   return {
     workspace,
     files:listFiles(workspace).map(file=>join(workspace,file)),
     checks,
     mode:"ai",
+    github,
     output:`AI coding agent completed the prototype in ${workspace}. ${result.finalOutput??"No final summary returned."}`
   };
 }
