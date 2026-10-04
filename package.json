@@ -8,7 +8,8 @@
     "build": "tsc",
     "test": "tsx src/core/engine.test.ts",
     "start": "node dist/server.js",
-    "test:smoke": "tsx src/core/smoke.test.ts"
+    "test:smoke": "tsx src/core/smoke.test.ts",
+    "test:e2e": "tsx src/core/e2e.test.ts"
   },
   "dependencies": {
     "@openai/agents": "^0.18.0",
