@@ -19,7 +19,12 @@ assert.ok(selected, "Decision must select a researched opportunity");
 assert.ok(decision.alternatives.length >= 1, "Decision must retain alternatives");
 assert.equal(decision.budgetChf, selected?.estimatedCostChf);
 assert.equal(decision.status, "approved", "Affordable prototype decision should be approved");
+assert.equal(state.executions.length, 1, "Approved decision must execute");
+assert.equal(state.executions[0].status, "completed", "Execution must complete");
+assert.equal(state.executions[0].decisionId, decision.id);
+assert.equal(state.costsChf, selected?.estimatedCostChf);
+assert.equal(state.cashChf, 100-(selected?.estimatedCostChf??0));
 assert.equal(classifyRisk("delete production database"), "high");
 assert.equal(requiresApproval("high"), true);
 
-console.log("V0.1 autonomous decision-cycle tests passed.");
+console.log("V0.1 autonomous decision -> execution tests passed.");
