@@ -1,4 +1,5 @@
 import {createServer} from "node:http";
+import {randomUUID} from "node:crypto";
 import {Memory} from "./core/memory.js";
 import {runCeoCycle} from "./agents/ceo.js";
 import {executeDecision} from "./agents/executor.js";
@@ -47,7 +48,7 @@ small{color:#737d8c}.mono{font-family:ui-monospace,SFMono-Regular,monospace;font
 <div class="grid">${cards.map(([l,v])=>`<div class="card"><div class="label">${l}</div><div class="value">${escapeHtml(v)}</div></div>`).join("")}</div>
 <div class="actions">
 <form method="post" action="/cycle"><button>▶ Run CEO Cycle</button></form>
-<form method="get" action="/api/state"><button>View State JSON</button></form>
+<form method="get" action="/api/state"><button>View State JSON</button></form>${process.env.CONTROL_PANEL_TEST_MODE==="true"?'<form method="post" action="/api/test-risk"><button class="warn">Create Risk-Gate Test</button></form>':""}
 </div>
 <div class="panel"><h2>Pending Approvals</h2>
 ${pending.length?pending.map(d=>`<div class="card" style="margin:10px 0"><b>${escapeHtml(d.action)}</b><p>${escapeHtml(d.reason)}</p><small>Risk: ${escapeHtml(d.risk)} · Budget: CHF ${d.budgetChf.toFixed(2)} · Confidence: ${Math.round(d.confidence*100)}%</small>
@@ -73,6 +74,19 @@ createServer(async(req,res)=>{
   }
   if(req.method==="GET"&&req.url==="/api/ledger"){
     res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(ledger())); return;
+  }
+  if(req.method==="POST"&&req.url==="/api/test-risk"){
+    if(process.env.CONTROL_PANEL_TEST_MODE!=="true"){res.writeHead(404);res.end("Not found");return;}
+    const decision={
+      id:randomUUID(),cycle:memory.snapshot().cycle+1,
+      action:"publish prototype to production",reason:"Control Panel risk-gate test",
+      expectedOutcome:"Verify high-risk actions require explicit human approval.",
+      confidence:.99,risk:"high" as const,approved:false,createdAt:new Date().toISOString(),
+      opportunityId:"control-panel-risk-test",opportunityScore:0,alternatives:[],
+      budgetChf:5,status:"pending_approval" as const
+    };
+    memory.addDecision(decision);
+    res.writeHead(200,{"content-type":"application/json"});res.end(JSON.stringify({status:"pending_approval",decisionId:decision.id}));return;
   }
   if(req.method==="POST"&&req.url==="/cycle"){
     await runCeoCycle(memory); res.writeHead(303,{location:"/control"}); res.end(); return;
