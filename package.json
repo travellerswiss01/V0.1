@@ -10,7 +10,8 @@
     "start": "node dist/server.js",
     "test:smoke": "tsx src/core/smoke.test.ts",
     "test:e2e": "tsx src/core/e2e.test.ts",
-    "test:approval": "tsx src/core/approval.test.ts"
+    "test:approval": "tsx src/core/approval.test.ts",
+    "test:control-panel": "tsx src/core/control-panel-approval.test.ts"
   },
   "dependencies": {
     "@openai/agents": "^0.18.0",
