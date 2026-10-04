@@ -90,15 +90,19 @@ function validatePrototype(workspace:string):{build:boolean;test:boolean;prototy
   return {build,test,prototype};
 }
 
-export function runDeterministicCodeAgent(task:BuildTask):CodeAgentResult {
+export async function runDeterministicCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
   const seeded=seedWorkspace(task);
   const checks=validatePrototype(seeded.workspace);
+  const github=process.env.GITHUB_PUBLISH_ENABLED==="true"
+    ?await publishWorkspaceToGitHub(seeded.workspace,task.id,task.title,task.objective)
+    :undefined;
   return {
     workspace:seeded.workspace,
     files:listFiles(seeded.workspace).map(file=>join(seeded.workspace,file)),
     checks,
     mode:"deterministic",
-    output:`Deterministic coding agent created ${seeded.workspace} and passed repository build, smoke test and prototype TypeScript validation.`
+    github,
+    output:`Deterministic coding agent created ${seeded.workspace}, passed repository build, smoke test and prototype TypeScript validation${github?" and published a guarded GitHub draft PR.":"."}`
   };
 }
 
@@ -206,7 +210,7 @@ export async function executeCodeAgent(memory:{addExecution:(result:ExecutionRes
   try {
     const task=createBuildTask(decision);
     const aiEnabled=process.env.AI_CODING_AGENT_ENABLED==="true";
-    const result=aiEnabled?await runAiCodeAgent(task):runDeterministicCodeAgent(task);
+    const result=aiEnabled?await runAiCodeAgent(task):await runDeterministicCodeAgent(task);
     const execution:ExecutionResult={
       id:decision.id,decisionId:decision.id,status:"completed",action:decision.action,
       startedAt,completedAt:new Date().toISOString(),costChf:decision.budgetChf,
