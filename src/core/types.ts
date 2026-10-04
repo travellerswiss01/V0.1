@@ -1,5 +1,18 @@
 export type RiskLevel = "low" | "medium" | "high";
 
+export type FailureCode =
+  | "transient"
+  | "validation"
+  | "budget"
+  | "approval"
+  | "auth"
+  | "permission"
+  | "policy"
+  | "destructive"
+  | "legal"
+  | "payment"
+  | "unknown";
+
 export interface Opportunity {
   id:string; title:string; customer:string; priceChf:number; mvpDays:number;
   estimatedCostChf:number; competition:"low"|"medium"|"high"; automation:number;
@@ -17,6 +30,7 @@ export interface ExecutionResult {
   id:string; decisionId:string; status:"completed"|"blocked"|"failed";
   action:string; startedAt:string; completedAt:string; costChf:number;
   output:string; error?:string;
+  attempt?:number; maxAttempts?:number; failureCode?:FailureCode; retryable?:boolean;
   artifacts?:{
     workspace?:string;
     files?:string[];
@@ -29,7 +43,7 @@ export interface ExecutionResult {
 export interface LedgerEntry {
   id:string;
   timestamp:string;
-  type:"decision_created"|"decision_approved"|"execution_recorded";
+  type:"decision_created"|"decision_approved"|"execution_failed"|"execution_retry_scheduled"|"execution_recovered"|"execution_recorded";
   decisionId:string;
   status:string;
   action:string;
