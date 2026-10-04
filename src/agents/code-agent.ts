@@ -221,6 +221,7 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
 export async function executeCodeAgent(memory:{
   addExecution:(result:ExecutionResult)=>ExecutionResult|void;
   getExecutionByDecisionId?:(decisionId:string)=>ExecutionResult|undefined;
+  authorizeSpend?:(decisionId:string,amountChf:number)=>{authorized:boolean;reason:string};
   recordFailure?:(decisionId:string,action:string,risk:Decision["risk"],budgetChf:number,entry:{
     type:"execution_failed"|"execution_retry_scheduled"|"execution_recovered";
     status:string; detail:string;
@@ -245,6 +246,17 @@ export async function executeCodeAgent(memory:{
   }
 
   return withExecutionLock(lock,decision.id,async()=>{
+  const authorization=memory.authorizeSpend?.(decision.id,decision.budgetChf);
+  if(authorization && !authorization.authorized){
+    const result:ExecutionResult={
+      id:decision.id,decisionId:decision.id,status:"failed",action:decision.action,
+      startedAt,completedAt:new Date().toISOString(),costChf:0,
+      output:"Code-agent execution blocked by Budget 2.0.",
+      error:authorization.reason,attempt:1,maxAttempts,failureCode:"budget",retryable:false
+    };
+    memory.addExecution(result);
+    return result;
+  }
   for(let attempt=1;attempt<=maxAttempts;attempt++){
     try{
       const task=createBuildTask(decision);
