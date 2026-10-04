@@ -210,7 +210,14 @@ export async function executeCodeAgent(memory:{addExecution:(result:ExecutionRes
     const execution:ExecutionResult={
       id:decision.id,decisionId:decision.id,status:"completed",action:decision.action,
       startedAt,completedAt:new Date().toISOString(),costChf:decision.budgetChf,
-      output:result.output
+      output:result.output,
+      artifacts:{
+        workspace:result.workspace,
+        files:result.files,
+        checks:result.checks,
+        mode:result.mode,
+        github:result.github
+      }
     };
     memory.addExecution(execution);
     return execution;
