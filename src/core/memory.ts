@@ -60,6 +60,14 @@ export class Memory{
       .reduce((sum,d)=>sum+d.budgetChf,0);
     return this.state.cashChf-reservedExcludingCurrent-(decision?.budgetChf??0);
   }
+  recordFailure(decisionId:string,action:string,risk:Decision["risk"],budgetChf:number,entry:{
+    type:"execution_failed"|"execution_retry_scheduled"|"execution_recovered";
+    status:string;
+    detail:string;
+  }){
+    this.appendLedger({type:entry.type,decisionId,status:entry.status,action,budgetChf,risk,detail:entry.detail});
+    this.save();
+  }
   getExecutionByDecisionId(decisionId:string):ExecutionResult | undefined {
     const execution=this.state.executions.find(item=>item.decisionId===decisionId);
     return execution?structuredClone(execution):undefined;
