@@ -126,6 +126,8 @@ function validatePrototype(workspace:string):{build:boolean;test:boolean;prototy
 export async function runDeterministicCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
   const seeded=seedWorkspace(task);
   const checks=validatePrototype(seeded.workspace);
+  const review=await reviewCode(task,seeded.workspace,checks);
+  if(!review.approved) throw new Error(`Review gate did not pass: ${review.summary}`);
   const github=process.env.GITHUB_PUBLISH_ENABLED==="true"
     ?await publishWorkspaceToGitHub(seeded.workspace,task.id,task.title,task.objective)
     :undefined;
@@ -134,6 +136,7 @@ export async function runDeterministicCodeAgent(task:BuildTask):Promise<CodeAgen
     files:listFiles(seeded.workspace).map(file=>join(seeded.workspace,file)),
     checks,
     mode:"deterministic",
+    review,
     github,
     output:`Deterministic coding agent created ${seeded.workspace}, passed repository build, prototype TypeScript validation and prototype health test${github?" and published a guarded GitHub draft PR.":"."}`
   };
