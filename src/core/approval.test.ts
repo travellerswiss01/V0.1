@@ -1,10 +1,16 @@
 import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
+import {mkdtempSync,rmSync} from "node:fs";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
 import {Memory} from "./memory.js";
 import {classifyRisk,requiresApproval} from "./policy.js";
 import {executeCodeAgent} from "../agents/code-agent.js";
 import type {Decision} from "./types.js";
 
+const testDir=mkdtempSync(join(tmpdir(),"v01-approval-"));
+const previousCwd=process.cwd();
+process.chdir(testDir);
 const memory=new Memory(100);
 const decision:Decision={
   id:randomUUID(),
@@ -57,3 +63,5 @@ console.log(JSON.stringify({
   executed:true,
   costChf:execution?.costChf
 },null,2));
+process.chdir(previousCwd);
+rmSync(testDir,{recursive:true,force:true});
