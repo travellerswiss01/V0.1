@@ -48,7 +48,7 @@ ${pending.length?pending.map(d=>`<div class="card" style="margin:10px 0"><b>${es
 <form method="post" action="/approve" style="margin-top:12px"><input type="hidden" name="decisionId" value="${escapeHtml(d.id)}"><button class="warn">Approve & Execute</button></form></div>`).join(""):"<p>No human approvals required.</p>"}</div>
 <div class="panel" style="margin-top:18px"><h2>Decision Ledger</h2>
 <table><thead><tr><th>TIME</th><th>TYPE</th><th>STATUS</th><th>ACTION</th><th>DETAIL</th></tr></thead><tbody>
-${entries.slice(0,50).map(e=>`<tr><td><small>${escapeHtml(e.time)}</small></td><td>${escapeHtml(e.type)}</td><td><span class="pill ${escapeHtml(e.status)}">${escapeHtml(e.status)}</span></td><td><b>${escapeHtml(e.action)}</b></td><td>${escapeHtml(e.detail)}</td></tr>`).join("")}
+${entries.slice(0,50).map(e=>`<tr><td><small>${escapeHtml(e.timestamp)}</small></td><td>${escapeHtml(e.type)}</td><td><span class="pill ${escapeHtml(e.status)}">${escapeHtml(e.status)}</span></td><td><b>${escapeHtml(e.action)}</b></td><td>${escapeHtml(e.detail)}</td></tr>`).join("")}
 </tbody></table></div>
 <div class="panel" style="margin-top:18px"><h2>Latest Opportunities</h2><div class="mono">${escapeHtml(JSON.stringify(s.opportunities.slice(0,5),null,2))}</div></div>
 </body></html>`;
