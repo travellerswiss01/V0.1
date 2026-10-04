@@ -51,7 +51,9 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "",
     "## Acceptance criteria",
     ...task.acceptanceCriteria.map(x=>`- ${x}`)
-  ].join("\n")+"\n");
+  ].join("
+")+"
+");
 
   writeFileSync(product,[
     "export const product = {",
@@ -61,7 +63,9 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "};",
     "",
     "export function healthCheck():boolean { return Boolean(product.name && product.opportunityId); }"
-  ].join("\n")+"\n");
+  ].join("
+")+"
+");
 
   writeFileSync(test,[
     'import {strict as assert} from "node:assert";',
@@ -69,7 +73,9 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "",
     'assert.equal(healthCheck(),true);',
     'console.log("Prototype health check passed.");'
-  ].join("\n")+"\n");
+  ].join("
+")+"
+");
 
   return {workspace,readme,product,test};
 }
@@ -185,7 +191,8 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
       "You must call validate_prototype before declaring success.",
       "If validation fails, inspect the error, fix the code, and validate again.",
       "Do not claim success unless validate_prototype reports ok:true."
-    ].join("\n"),
+    ].join("
+"),
     tools:[readTool,writeTool,listTool,validateTool]
   });
 
@@ -196,7 +203,8 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
     "Acceptance criteria:",
     ...task.acceptanceCriteria.map(x=>`- ${x}`),
     `Workspace: ${workspace}`
-  ].join("\n"),{maxTurns:8});
+  ].join("
+"),{maxTurns:8});
 
   let checks:{build:boolean;test:boolean;prototype:boolean};
   try {
@@ -244,7 +252,8 @@ export async function executeCodeAgent(memory:{
     return result;
   }
 
-  return withExecutionLock(lock,decision.id,async()=>{\n  for(let attempt=1;attempt<=maxAttempts;attempt++){
+  return withExecutionLock(lock,decision.id,async()=>{
+  for(let attempt=1;attempt<=maxAttempts;attempt++){
     try{
       const task=createBuildTask(decision);
       const aiEnabled=process.env.AI_CODING_AGENT_ENABLED==="true";
@@ -298,5 +307,8 @@ export async function executeCodeAgent(memory:{
     }
   }
 
-\n  });\n\n  throw new Error("Failure engine exhausted without producing an execution result.");
+
+  });
+
+  throw new Error("Failure engine exhausted without producing an execution result.");
 }
