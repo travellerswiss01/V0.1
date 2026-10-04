@@ -26,6 +26,8 @@ export class Memory{
     return structuredClone(decision);
   }
   addExecution(result:ExecutionResult){
+    const existing=this.state.executions.find(item=>item.decisionId===result.decisionId);
+    if(existing){return structuredClone(existing);}
     this.state.executions.unshift(result);
     if(result.status==="completed"){
       this.state.cashChf-=result.costChf;
@@ -33,6 +35,10 @@ export class Memory{
     }
     this.state.pendingApprovals=this.state.pendingApprovals.filter(id=>id!==result.decisionId);
     this.save();
+  }
+  getExecutionByDecisionId(decisionId:string):ExecutionResult | undefined {
+    const execution=this.state.executions.find(item=>item.decisionId===decisionId);
+    return execution?structuredClone(execution):undefined;
   }
   save(){writeFileSync(this.path,JSON.stringify(this.state,null,2));}
   nextCycle(){this.state.cycle+=1;this.save();}
