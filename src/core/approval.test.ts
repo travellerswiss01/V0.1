@@ -9,11 +9,11 @@ const memory=new Memory(100);
 const decision:Decision={
   id:randomUUID(),
   cycle:1,
-  action:"publish prototype to production",
+  action:"deploy prototype to production",
   reason:"Approval-gate integration test",
   expectedOutcome:"Prove that high-risk actions stop before execution.",
   confidence:.9,
-  risk:classifyRisk("publish prototype to production"),
+  risk:classifyRisk("deploy prototype to production"),
   approved:false,
   createdAt:new Date().toISOString(),
   opportunityId:"approval-test",
