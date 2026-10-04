@@ -8,6 +8,7 @@ import {classifyFailure,nextRetry} from "../core/failure.js";
 import {createBuildTask} from "./build-task.js";
 import type {BuildTask} from "./build-task.js";
 import {publishWorkspaceToGitHub} from "./github-publisher.js";
+import {ExecutionLock,withExecutionLock} from "../core/execution-lock.js";
 
 export interface CodeAgentResult {
   workspace:string;
@@ -230,6 +231,7 @@ export async function executeCodeAgent(memory:{
 
   const startedAt=new Date().toISOString();
   const maxAttempts=3;
+  const lock=new ExecutionLock("data/execution.lock");
 
   if(decision.status!=="approved"||!decision.approved){
     const result:ExecutionResult={
@@ -242,7 +244,7 @@ export async function executeCodeAgent(memory:{
     return result;
   }
 
-  for(let attempt=1;attempt<=maxAttempts;attempt++){
+  return withExecutionLock(lock,decision.id,async()=>{\n  for(let attempt=1;attempt<=maxAttempts;attempt++){
     try{
       const task=createBuildTask(decision);
       const aiEnabled=process.env.AI_CODING_AGENT_ENABLED==="true";
@@ -296,5 +298,5 @@ export async function executeCodeAgent(memory:{
     }
   }
 
-  throw new Error("Failure engine exhausted without producing an execution result.");
+\n  });\n\n  throw new Error("Failure engine exhausted without producing an execution result.");
 }
