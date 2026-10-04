@@ -26,8 +26,21 @@ export interface ExecutionResult {
   };
 }
 
+export interface LedgerEntry {
+  id:string;
+  timestamp:string;
+  type:"decision_created"|"decision_approved"|"execution_recorded";
+  decisionId:string;
+  status:string;
+  action:string;
+  budgetChf:number;
+  risk:RiskLevel;
+  detail:string;
+}
+
 export interface CompanyState {
   cashChf:number; revenueChf:number; costsChf:number; cycle:number;
   opportunities:Opportunity[]; decisions:Decision[];
   executions:ExecutionResult[]; pendingApprovals:string[];
+  ledger:LedgerEntry[];
 }
