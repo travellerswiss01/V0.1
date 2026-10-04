@@ -5,30 +5,30 @@ import {research} from "./research.js";
 import {Memory} from "../core/memory.js";
 import {executeCodeAgent} from "./code-agent.js";
 
-function evaluate(opportunity:Opportunity, cashChf:number):number {
-  const budgetFit = opportunity.estimatedCostChf <= cashChf ? 15 : -40;
-  const speed = opportunity.mvpDays <= 1 ? 15 : opportunity.mvpDays <= 3 ? 10 : 0;
-  const margin = opportunity.priceChf > opportunity.estimatedCostChf * 2 ? 10 : 0;
-  return opportunity.score + budgetFit + speed + margin;
+function evaluate(opportunity:Opportunity,cashChf:number):number {
+  const budgetFit=opportunity.estimatedCostChf<=cashChf?15:-40;
+  const speed=opportunity.mvpDays<=1?15:opportunity.mvpDays<=3?10:0;
+  const margin=opportunity.priceChf>opportunity.estimatedCostChf*2?10:0;
+  return opportunity.score+budgetFit+speed+margin;
 }
 
-export function runCeoCycle(memory:Memory):Decision {
+export async function runCeoCycle(memory:Memory):Promise<Decision> {
   memory.nextCycle();
-  const state = memory.snapshot();
-  const candidates = research();
+  const state=memory.snapshot();
+  const candidates=research();
   memory.setOpportunities(candidates);
-  const ranked = candidates
-    .map(opportunity => ({opportunity,decisionScore:evaluate(opportunity,state.cashChf)}))
+  const ranked=candidates
+    .map(opportunity=>({opportunity,decisionScore:evaluate(opportunity,state.cashChf)}))
     .sort((a,b)=>b.decisionScore-a.decisionScore);
 
-  const top = ranked[0].opportunity;
-  const alternatives = ranked.slice(1,3).map(x=>x.opportunity.title);
-  const budget = top.estimatedCostChf;
-  const action = `Validate and prototype: ${top.title}`;
-  const risk = classifyRisk(action);
-  const affordable = budget <= state.cashChf;
-  const approved = affordable && !requiresApproval(risk);
-  const status = !affordable ? "rejected" : approved ? "approved" : "pending_approval";
+  const top=ranked[0].opportunity;
+  const alternatives=ranked.slice(1,3).map(x=>x.opportunity.title);
+  const budget=top.estimatedCostChf;
+  const action=`Validate and prototype: ${top.title}`;
+  const risk=classifyRisk(action);
+  const affordable=budget<=state.cashChf;
+  const approved=affordable&&!requiresApproval(risk);
+  const status=!affordable?"rejected":approved?"approved":"pending_approval";
 
   const decision:Decision={
     id:randomUUID(),cycle:state.cycle,action,
@@ -41,6 +41,6 @@ export function runCeoCycle(memory:Memory):Decision {
   };
   memory.addDecision(decision);
 
-  if(decision.status==="approved") executeCodeAgent(memory,decision);
+  if(decision.status==="approved") await executeCodeAgent(memory,decision);
   return decision;
 }
