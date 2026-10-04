@@ -216,8 +216,11 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
   ].join("\n"),{maxTurns:16});
 
   let checks:{build:boolean;test:boolean;prototype:boolean};
+  let review:CodeAgentResult["review"];
   try {
     checks=validatePrototype(workspace);
+    review=await reviewCode(task,workspace,checks);
+    if(!review.approved) throw new Error(`Review gate did not pass: ${review.summary}`);
   } catch(error) {
     throw new Error(`AI coding agent final validation failed: ${error instanceof Error?error.message:String(error)}`);
   }
@@ -230,6 +233,7 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
     files:listFiles(workspace).map(file=>join(workspace,file)),
     checks,
     mode:"ai",
+    review:review!,
     github,
     output:`AI coding agent completed the prototype in ${workspace}. ${result.finalOutput??"No final summary returned."}`
   };
@@ -288,6 +292,7 @@ export async function executeCodeAgent(memory:{
           workspace:result.workspace,
           files:result.files,
           checks:result.checks,
+          review:result.review,
           mode:result.mode,
           github:result.github
         }
