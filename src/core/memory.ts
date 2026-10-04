@@ -36,6 +36,20 @@ export class Memory{
     this.state.pendingApprovals=this.state.pendingApprovals.filter(id=>id!==result.decisionId);
     this.save();
   }
+  reservedBudgetChf():number {
+    return this.state.decisions
+      .filter(d=>d.status==="approved")
+      .filter(d=>!this.state.executions.some(e=>e.decisionId===d.id))
+      .reduce((sum,d)=>sum+d.budgetChf,0);
+  }
+  availableForExecutionChf(decisionId:string):number {
+    const decision=this.state.decisions.find(d=>d.id===decisionId);
+    const reservedExcludingCurrent=this.state.decisions
+      .filter(d=>d.status==="approved" && d.id!==decisionId)
+      .filter(d=>!this.state.executions.some(e=>e.decisionId===d.id))
+      .reduce((sum,d)=>sum+d.budgetChf,0);
+    return this.state.cashChf-reservedExcludingCurrent-(decision?.budgetChf??0);
+  }
   getExecutionByDecisionId(decisionId:string):ExecutionResult | undefined {
     const execution=this.state.executions.find(item=>item.decisionId===decisionId);
     return execution?structuredClone(execution):undefined;
