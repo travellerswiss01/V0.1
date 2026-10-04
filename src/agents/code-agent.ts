@@ -8,6 +8,7 @@ import {classifyFailure,nextRetry} from "../core/failure.js";
 import {createBuildTask} from "./build-task.js";
 import type {BuildTask} from "./build-task.js";
 import {publishWorkspaceToGitHub} from "./github-publisher.js";
+import {reviewCode} from "./code-review.js";
 import {ExecutionLock,withExecutionLock} from "../core/execution-lock.js";
 import type {Memory} from "../core/memory.js";
 
@@ -16,6 +17,7 @@ export interface CodeAgentResult {
   files:string[];
   checks:{build:boolean;test:boolean;prototype:boolean};
   mode:"ai"|"deterministic";
+  review:{approved:boolean;score:number;findings:string[];mode:"ai"|"deterministic";summary:string};
   output:string;
   github?:{branch:string;commitSha:string;prNumber:number;prUrl:string};
 }
