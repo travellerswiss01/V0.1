@@ -14,6 +14,15 @@ export class Memory{
   snapshot(){return structuredClone(this.state);}
   setOpportunities(items:Opportunity[]){this.state.opportunities=items;this.save();}
   addDecision(d:Decision){this.state.decisions.unshift(d);if(d.status==="pending_approval")this.state.pendingApprovals.unshift(d.id);this.save();}
+  approveDecision(id:string):Decision | undefined {
+    const decision=this.state.decisions.find(item=>item.id===id);
+    if(!decision || decision.status!=="pending_approval") return undefined;
+    decision.approved=true;
+    decision.status="approved";
+    this.state.pendingApprovals=this.state.pendingApprovals.filter(item=>item!==id);
+    this.save();
+    return structuredClone(decision);
+  }
   addExecution(result:ExecutionResult){
     this.state.executions.unshift(result);
     if(result.status==="completed"){
