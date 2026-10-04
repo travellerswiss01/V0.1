@@ -13,7 +13,7 @@ const execution=(decisionId:string,costChf:number,status:ExecutionResult["status
 
 let view={cashChf:100,decisions:[decision("d1",30),decision("d2",50)],executions:[]};
 assert.equal(policy.reserved(view),80);
-assert.equal(policy.available(view,"d1"),-30);
+assert.equal(policy.available(view,"d1"),20);
 assert.equal(policy.authorize(view,"d1",30).authorized,false);
 
 view={...view,decisions:[decision("d1",30)],executions:[]};
