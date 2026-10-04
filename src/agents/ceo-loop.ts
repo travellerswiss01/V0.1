@@ -1,10 +1,10 @@
 import {Agent,run} from "@openai/agents";
 import {Memory} from "../core/memory.js";
-import {createCeoTools} from "./ceo-tools.js";
+import {createCeoTools,CeoToolService} from "./ceo-tools.js";
 import {runCeoCycle} from "./ceo.js";
 import type {Decision} from "../core/types.js";
 
-export interface CevLoopResult {
+export interface CeoLoopResult {
   mode:"ai"|"deterministic";
   decision:Decision;
   summary:string;
@@ -25,6 +25,16 @@ export async function runCeoDecisionLoop(memory:Memory):Promise<CevLoopResult>{
     };
   }
 
+  const service=new CeoToolService(memory);
+  const candidates=service.researchMarket();
+  const criticAgent=new Agent({
+    name:"CEO Strategy Critic",
+    model:process.env.OPENAI_CEO_MODEL||"gpt-5.5",
+    instructions:"You are a skeptical startup critic. Review the candidate opportunities and recommend the best one for a small capital-constrained company. Reject ideas only when there is a clear budget, speed, margin, competition or execution problem. Return a concise recommendation and risks. Do not execute tools.",
+  });
+  const criticResult=await run(criticAgent,JSON.stringify({cashChf:memory.snapshot().cashChf,candidates}),{maxTurns:4});
+  const criticSummary=criticResult.finalOutput??"No critic recommendation returned.";
+
   const agent=new Agent({
     name:"Autonomous Company CEO Decision Loop",
     model:process.env.OPENAI_CEO_MODEL||"gpt-5.5",
@@ -38,6 +48,8 @@ export async function runCeoDecisionLoop(memory:Memory):Promise<CevLoopResult>{
       "If the decision is pending approval, request approval and stop; never approve it yourself.",
       "If the decision is approved, build the product and inspect its test result.",
       "Never publish production, spend outside the decision budget, make payments, send mass communications, sign contracts, or perform destructive actions.",
+      "A separate strategy critic reviewed the current candidates before you act. Consider its recommendation, but make your own policy-compliant decision.",
+      `Strategy critic: ${criticSummary}`,
       "Finish with a concise report containing cycle, selected opportunity, decision id, status, execution status and next action.",
       "Do not invent results: only report results returned by tools."
     ].join("\n"),
