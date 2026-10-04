@@ -2,8 +2,10 @@ import { readFileSync,writeFileSync,existsSync,mkdirSync } from "node:fs";
 import type { CompanyState,Decision,ExecutionResult,Opportunity } from "./types.js";
 export class Memory{
   private state:CompanyState; private readonly path="data/company-state.json";
-  constructor(startingCapital:number){
+  constructor(startingCapital:number,statePath="data/company-state.json"){
+    this.path=statePath;
     mkdirSync("data",{recursive:true});
+    mkdirSync(this.path.split("/").slice(0,-1).join("/")||".",{recursive:true});
     this.state=existsSync(this.path)?JSON.parse(readFileSync(this.path,"utf8")):{
       cashChf:startingCapital,revenueChf:0,costsChf:0,cycle:0,
       opportunities:[],decisions:[],executions:[],pendingApprovals:[]
