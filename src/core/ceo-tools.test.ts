@@ -23,6 +23,10 @@ try{
   const blocked=await service.buildProduct("missing-decision");
   assert.equal(blocked.status,"blocked");
 
+  const spec=service.createProductSpec(decision.id);
+  assert.equal(spec.pricingChf,opportunities[0].priceChf);
+  assert.ok(spec.acceptanceCriteria.length>=4);
+
   const built=await service.buildProduct(decision.id);
   assert.equal(built.status,"completed");
   assert.equal(built.artifacts?.checks?.build,true);
@@ -40,7 +44,7 @@ try{
   const pending=service.requestApproval(decision.id);
   assert.equal(pending.requested,false);
 
-  console.log(JSON.stringify({status:"passed",tools:10,execution:built.status}));
+  console.log(JSON.stringify({status:"passed",tools:11,execution:built.status}));
 }finally{
   rmSync(dir,{recursive:true,force:true});
 }
