@@ -46,7 +46,7 @@ export async function runCeoDecisionLoop(memory:Memory):Promise<CevLoopResult>{
       "Choose exactly one opportunity based on expected learning, affordability, speed and margin.",
       "Create a decision for the selected opportunity.",
       "If the decision is pending approval, request approval and stop; never approve it yourself.",
-      "If the decision is approved, build the product and inspect its test result.",
+      "If the decision is approved, first create the structured product specification, then build the product and inspect its test result.",
       "Never publish production, spend outside the decision budget, make payments, send mass communications, sign contracts, or perform destructive actions.",
       "A separate strategy critic reviewed the current candidates before you act. Consider its recommendation, but make your own policy-compliant decision.",
       `Strategy critic: ${criticSummary}`,
