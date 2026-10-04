@@ -15,7 +15,7 @@ export interface ProductSpecification {\n  id:string; decisionId:string; opportu
   opportunityId:string; opportunityScore:number; alternatives:string[];
   budgetChf:number; status:"approved"|"pending_approval"|"rejected";
 }
-export interface ExecutionResult {
+export interface CodeReviewArtifact {\n  approved:boolean; score:number; findings:string[]; mode:"ai"|"deterministic"; summary:string;\n}\nexport interface ExecutionResult {
   id:string; decisionId:string; status:"completed"|"blocked"|"failed";
   action:string; startedAt:string; completedAt:string; costChf:number;
   output:string; error?:string; attempt?:number; maxAttempts?:number;
