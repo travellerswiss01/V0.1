@@ -12,6 +12,10 @@ interface GitHubCommit {
   sha:string;
 }
 
+interface GitHubRef {
+  object:{sha:string};
+}
+
 interface GitHubTree {
   sha:string;
 }
@@ -72,8 +76,8 @@ export async function publishWorkspaceToGitHub(
   objective:string
 ):Promise<{branch:string;commitSha:string;prNumber:number;prUrl:string}> {
   const c=config();
-  const base=await github<GitHubCommit>(`/repos/${c.owner}/${c.repo}/git/ref/heads/${c.baseBranch}`);
-  const baseSha=base.sha;
+  const base=await github<GitHubRef>(`/repos/${c.owner}/${c.repo}/git/ref/heads/${c.baseBranch}`);
+  const baseSha=base.object.sha;
   const baseCommit=await github<{sha:string;commit:{tree:{sha:string}}}>(`/repos/${c.owner}/${c.repo}/commits/${baseSha}`);
   const branch=branchName(decisionId);
 
