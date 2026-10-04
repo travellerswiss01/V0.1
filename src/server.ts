@@ -5,6 +5,7 @@ import {runCeoCycle} from "./agents/ceo.js";
 import {executeDecision} from "./agents/executor.js";
 import {executeCodeAgent} from "./agents/code-agent.js";
 import {askCeo} from "./agents/ai-ceo.js";
+import {runCeoDecisionLoop} from "./agents/ceo-loop.js";
 
 const port=Number(process.env.PORT||3000);
 const memory=new Memory(Number(process.env.STARTING_CAPITAL_CHF||100),process.env.COMPANY_STATE_PATH||"data/company-state.json");
@@ -82,7 +83,11 @@ createServer(async(req,res)=>{
     res.writeHead(200,{"content-type":"application/json"});res.end(JSON.stringify({status:"pending_approval",decisionId:decision.id}));return;
   }
   if(req.method==="POST"&&req.url==="/cycle"){
-    await runCeoCycle(memory); res.writeHead(303,{location:"/control"}); res.end(); return;
+    await runCeoDecisionLoop(memory); res.writeHead(303,{location:"/control"}); res.end(); return;
+  }
+  if(req.method==="POST"&&req.url==="/api/ceo-loop"){
+    const result=await runCeoDecisionLoop(memory);
+    res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(result)); return;
   }
   if(req.method==="POST"&&req.url==="/approve"){
     const body=await readBody(req); const decisionId=new URLSearchParams(body).get("decisionId");
