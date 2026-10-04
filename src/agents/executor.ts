@@ -16,12 +16,13 @@ export function executeDecision(memory:Memory, decision:Decision):ExecutionResul
     return result;
   }
 
-  if(decision.budgetChf>state.cashChf){
+  const available=memory.availableForExecutionChf(decision.id);
+  if(decision.budgetChf>available){
     const result:ExecutionResult={
       id:randomUUID(),decisionId:decision.id,status:"failed",action:decision.action,
       startedAt,completedAt:new Date().toISOString(),costChf:0,
       output:"Execution failed: insufficient cash.",
-      error:`Required CHF ${decision.budgetChf}, available CHF ${state.cashChf}.`
+      error:`Required CHF ${decision.budgetChf}, available for this execution CHF ${available}, cash CHF ${state.cashChf}.`
     };
     memory.addExecution(result);
     return result;
