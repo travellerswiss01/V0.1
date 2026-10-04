@@ -13,7 +13,14 @@ export interface Decision {
   budgetChf:number; status:"approved"|"pending_approval"|"rejected";
 }
 
+export interface ExecutionResult {
+  id:string; decisionId:string; status:"completed"|"blocked"|"failed";
+  action:string; startedAt:string; completedAt:string; costChf:number;
+  output:string; error?:string;
+}
+
 export interface CompanyState {
   cashChf:number; revenueChf:number; costsChf:number; cycle:number;
-  opportunities:Opportunity[]; decisions:Decision[]; pendingApprovals:string[];
+  opportunities:Opportunity[]; decisions:Decision[];
+  executions:ExecutionResult[]; pendingApprovals:string[];
 }
