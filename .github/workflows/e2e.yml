@@ -1,0 +1,29 @@
+name: V0.1 Autonomous E2E
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      AI_CODING_AGENT_ENABLED: ${{ secrets.OPENAI_API_KEY != '' && 'true' || 'false' }}
+      AI_CODING_AGENT_MODEL: gpt-5.4
+      GITHUB_TOKEN: ${{ github.token }}
+      GITHUB_REPOSITORY: ${{ github.repository }}
+      GITHUB_BASE_BRANCH: main
+      GITHUB_PUBLISH_ENABLED: true
+      STARTING_CAPITAL_CHF: 100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run build
+      - run: npm run test:e2e
