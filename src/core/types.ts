@@ -17,6 +17,13 @@ export interface ExecutionResult {
   id:string; decisionId:string; status:"completed"|"blocked"|"failed";
   action:string; startedAt:string; completedAt:string; costChf:number;
   output:string; error?:string;
+  artifacts?:{
+    workspace?:string;
+    files?:string[];
+    checks?:{build:boolean;test:boolean;prototype:boolean};
+    mode?:"ai"|"deterministic";
+    github?:{branch:string;commitSha:string;prNumber:number;prUrl:string};
+  };
 }
 
 export interface CompanyState {
