@@ -51,8 +51,7 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "",
     "## Acceptance criteria",
     ...task.acceptanceCriteria.map(x=>`- ${x}`)
-  ].join("
-")+"
+  ].join("\n")+"
 ");
 
   writeFileSync(product,[
@@ -63,8 +62,7 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "};",
     "",
     "export function healthCheck():boolean { return Boolean(product.name && product.opportunityId); }"
-  ].join("
-")+"
+  ].join("\n")+"
 ");
 
   writeFileSync(test,[
@@ -73,8 +71,7 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "",
     'assert.equal(healthCheck(),true);',
     'console.log("Prototype health check passed.");'
-  ].join("
-")+"
+  ].join("\n")+"
 ");
 
   return {workspace,readme,product,test};
@@ -191,8 +188,7 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
       "You must call validate_prototype before declaring success.",
       "If validation fails, inspect the error, fix the code, and validate again.",
       "Do not claim success unless validate_prototype reports ok:true."
-    ].join("
-"),
+    ].join("\n"),
     tools:[readTool,writeTool,listTool,validateTool]
   });
 
@@ -203,8 +199,7 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
     "Acceptance criteria:",
     ...task.acceptanceCriteria.map(x=>`- ${x}`),
     `Workspace: ${workspace}`
-  ].join("
-"),{maxTurns:8});
+  ].join("\n"),{maxTurns:8});
 
   let checks:{build:boolean;test:boolean;prototype:boolean};
   try {
