@@ -1,10 +1,15 @@
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
-import {resolve} from "node:path";
+import {mkdtempSync,rmSync} from "node:fs";
+import {tmpdir} from "node:os";
+import {join,resolve} from "node:path";
 
+const repoRoot=resolve(".");
+const testDir=mkdtempSync(join(tmpdir(),"v01-control-panel-"));
 const port=3700+Math.floor(Math.random()*300);
-const child=spawn("npx",["tsx","src/server.ts"],{
+const child=spawn("npx",["tsx",resolve(repoRoot,"src/server.ts")],{
   env:{...process.env,PORT:String(port),STARTING_CAPITAL_CHF:"100",CONTROL_PANEL_TEST_MODE:"true",GITHUB_PUBLISH_ENABLED:"false"},
+  cwd:testDir,
   stdio:["ignore","pipe","pipe"]
 });
 let logs="";
@@ -47,4 +52,5 @@ try{
 } finally {
   child.kill("SIGTERM");
   await wait(100);
+  rmSync(testDir,{recursive:true,force:true});
 }
