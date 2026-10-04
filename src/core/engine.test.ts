@@ -9,7 +9,7 @@ const opportunities = research();
 assert.ok(opportunities.length >= 3, "Research must return opportunities");
 assert.ok(opportunities[0].score >= opportunities[1].score, "Research must rank opportunities");
 
-const decision = runCeoCycle(memory);
+const decision = await runCeoCycle(memory);
 const state = memory.snapshot();
 const selected = opportunities.find(o=>o.id===decision.opportunityId);
 
@@ -21,7 +21,7 @@ assert.equal(decision.budgetChf, selected?.estimatedCostChf);
 assert.equal(decision.status, "approved", "Affordable prototype decision should be approved");
 assert.equal(state.executions.length, 1, "Approved decision must execute");
 assert.equal(state.executions[0].status, "completed", "Execution must complete");
-assert.match(state.executions[0].output, /Code agent created/, "Execution must invoke coding agent");
+assert.match(state.executions[0].output, /coding agent created/, "Execution must invoke coding agent");
 assert.equal(state.executions[0].decisionId, decision.id);
 assert.equal(state.costsChf, selected?.estimatedCostChf);
 assert.equal(state.cashChf, 100-(selected?.estimatedCostChf??0));
