@@ -15,6 +15,8 @@ export interface CompanyMetrics {
   productsBuilt:number;
   codeReviewsApproved:number;
   conversionToExecution:number;
+  revenuePerCompletedExecution:number;
+  failureRate:number;
 }
 
 export function companyMetrics(state:CompanyState):CompanyMetrics {
@@ -37,6 +39,8 @@ export function companyMetrics(state:CompanyState):CompanyMetrics {
     pendingApprovals:state.pendingApprovals.length,
     productsBuilt:executions.filter(e=>Boolean(e.artifacts?.workspace)).length,
     codeReviewsApproved,
-    conversionToExecution:approvedDecisions===0?0:completedExecutions/approvedDecisions
+    conversionToExecution:approvedDecisions===0?0:completedExecutions/approvedDecisions,
+    revenuePerCompletedExecution:completedExecutions===0?0:state.revenueChf/completedExecutions,
+    failureRate:executions.length===0?0:failedExecutions/executions.length
   };
 }
