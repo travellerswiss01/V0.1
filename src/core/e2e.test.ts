@@ -77,6 +77,7 @@ try {
   const secondState=memory.snapshot();
   const learned=secondState.decisions.find(item=>item.id===secondDecision.id);
   assert.ok(learned);
+  assert.match(secondDecision.action,/Grow and monetise/i,"Second CEO cycle must switch to monetisation after verified traction");
   assert.match(
     learned?.reason??"",
     /revenue CHF 120\.00/i,
