@@ -27,8 +27,8 @@ try{
   const learning=first.snapshot().notes.find(note=>note.executionId===execution.id);
   assert.ok(learning);
   assert.equal(learning?.opportunityId,"test-opportunity");
-  assert.match(learning?.text??"","profit CHF 34.00");
-  assert.match(learning?.text??"","ROI 680.0%");
+  assert.match(learning?.text??"",/profit CHF 34\.00/);
+  assert.match(learning?.text??"",/ROI 680\.0%/);
   assert.equal(first.snapshot().notes.filter(note=>note.executionId==="execution-1").length,1);
   first.recordGrowthEvent({id:"growth-1",opportunityId:"test-opportunity",channel:"b2b",type:"lead",timestamp:new Date().toISOString()});
   first.recordGrowthEvent({id:"growth-2",opportunityId:"test-opportunity",channel:"b2b",type:"customer",timestamp:new Date().toISOString()});
