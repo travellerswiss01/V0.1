@@ -67,7 +67,7 @@ export async function runCeoDecisionLoop(memory:Memory):Promise<CeoLoopResult>{
 
   const state=memory.snapshot();
   const strategy=deriveCeoStrategy(state);
-  const decision=state.decisions.at(-1);
+  const decision=state.decisions[0];
   if(!decision) throw new Error("AI CEO loop finished without creating a decision.");
 
   memory.addNote("learning",
