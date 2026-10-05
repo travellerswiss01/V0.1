@@ -56,14 +56,18 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "",
     "## Acceptance criteria",
     ...task.acceptanceCriteria.map(x=>`- ${x}`)
-  ].join("\n")+ "\n");
+  ].join("
+")+ "
+");
 
   writeFileSync(architecture,[
     "# Product Architecture","",
     "## Objective",task.objective,"",
     "## Components","- Customer input layer","- Core product logic","- Result/output layer","- Health check and validation","",
     "## Constraints","- MVP only","- No payments","- No production deployment","- No destructive operations"
-  ].join("\n")+"\n");
+  ].join("
+")+"
+");
 
   writeFileSync(product,[
     "export const product = {",
@@ -73,7 +77,9 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "};",
     "",
     "export function healthCheck():boolean { return Boolean(product.name && product.opportunityId); }"
-  ].join("\n")+ "\n");
+  ].join("
+")+ "
+");
 
   writeFileSync(test,[
     'import {strict as assert} from "node:assert";',
@@ -81,7 +87,9 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "",
     'assert.equal(healthCheck(),true);',
     'console.log("Prototype health check passed.");'
-  ].join("\n")+ "\n");
+  ].join("
+")+ "
+");
 
   return {workspace,readme,product,test,architecture};
 }
@@ -127,7 +135,12 @@ function validatePrototype(workspace:string):{build:boolean;test:boolean;prototy
 export async function runDeterministicCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
   const seeded=seedWorkspace(task);
   const checks=validatePrototype(seeded.workspace);
-  let review=await reviewCode(task,seeded.workspace,checks);\n  if(!review.approved){\n    const repair=await automaticFixLoop(task,seeded.workspace,checks,3,()=>validatePrototype(seeded.workspace));\n    review=repair.review;\n    if(!repair.approved) throw new Error(`Review gate did not pass after ${repair.rounds} repair round(s): ${review.summary}`);\n  }
+  let review=await reviewCode(task,seeded.workspace,checks);
+  if(!review.approved){
+    const repair=await automaticFixLoop(task,seeded.workspace,checks,3,()=>validatePrototype(seeded.workspace));
+    review=repair.review;
+    if(!repair.approved) throw new Error(`Review gate did not pass after ${repair.rounds} repair round(s): ${review.summary}`);
+  }
   const github=process.env.GITHUB_PUBLISH_ENABLED==="true"
     ?await publishWorkspaceToGitHub(seeded.workspace,task.id,task.title,task.objective)
     :undefined;
@@ -201,7 +214,8 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
       "Use a bounded repair loop: after a validation failure, diagnose the concrete error, make a focused fix, and validate again. Never perform more than 5 repair validations.",
       "If validation fails, inspect the error, fix the code, and validate again.",
       "Do not claim success unless validate_prototype reports ok:true."
-    ].join("\n"),
+    ].join("
+"),
     tools:[readTool,writeTool,listTool,validateTool]
   });
 
@@ -213,12 +227,20 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
     ...task.acceptanceCriteria.map(x=>`- ${x}`),
     `Workspace: ${workspace}`,
     "Repair budget: maximum 5 validation/fix iterations."
-  ].join("\n"),{maxTurns:16});
+  ].join("
+"),{maxTurns:16});
 
   let checks:{build:boolean;test:boolean;prototype:boolean};
   let review:CodeAgentResult["review"];
   try {
-    checks=validatePrototype(workspace);\n    review=await reviewCode(task,workspace,checks);\n    if(!review.approved){\n      const repair=await automaticFixLoop(task,workspace,checks,3,()=>validatePrototype(workspace));\n      review=repair.review;\n      if(!repair.approved) throw new Error(`Review gate did not pass after ${repair.rounds} repair round(s): ${review.summary}`);\n      checks=validatePrototype(workspace);\n    }
+    checks=validatePrototype(workspace);
+    review=await reviewCode(task,workspace,checks);
+    if(!review.approved){
+      const repair=await automaticFixLoop(task,workspace,checks,3,()=>validatePrototype(workspace));
+      review=repair.review;
+      if(!repair.approved) throw new Error(`Review gate did not pass after ${repair.rounds} repair round(s): ${review.summary}`);
+      checks=validatePrototype(workspace);
+    }
   } catch(error) {
     throw new Error(`AI coding agent final validation failed: ${error instanceof Error?error.message:String(error)}`);
   }
