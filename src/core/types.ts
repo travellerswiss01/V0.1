@@ -35,6 +35,11 @@ export interface ExecutionResult {
     review?:CodeReviewArtifact;
     github?:{branch:string;commitSha:string;prNumber:number;prUrl:string}};
 }
+export type GrowthEventType = "lead"|"contact"|"reply"|"qualified"|"offer"|"customer"|"revenue";
+export interface GrowthEvent {
+  id:string; opportunityId:string; channel:"b2b"|"seo"|"social"|"community"|"partnerships"|"paid_ads"; type:GrowthEventType;
+  valueChf?:number; timestamp:string; externalEventId?:string;
+}
 export interface LedgerEntry {
   id:string; timestamp:string;
   type:"decision_created"|"decision_approved"|"execution_failed"|"execution_retry_scheduled"|"execution_recovered"|"execution_recorded";
