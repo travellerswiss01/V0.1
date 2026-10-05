@@ -36,7 +36,7 @@ export async function runCeoCycle(memory:Memory):Promise<Decision> {
   const status=!affordable?"rejected":approved?"approved":"pending_approval";
   const history=strategy.performance.find(p=>p.opportunityId===top.id);
   const historySummary=history
-    ? ` History: ${history.attempts} attempt(s), ${Math.round(history.successRate*100)}% success, average cost CHF ${history.averageCostChf.toFixed(2)}.`
+    ? ` History: ${history.attempts} attempt(s), ${Math.round(history.successRate*100)}% success, revenue CHF ${history.revenueChf.toFixed(2)}, profit CHF ${history.profitChf.toFixed(2)}, ROI ${(history.roi*100).toFixed(1)}%, average cost CHF ${history.averageCostChf.toFixed(2)}.`
     : " History: no prior execution.";
 
   const decision:Decision={
