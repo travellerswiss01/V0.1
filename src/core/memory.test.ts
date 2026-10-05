@@ -8,7 +8,7 @@ const dir=mkdtempSync(join(tmpdir(),"v01-memory-"));
 const path=join(dir,"state.json");
 try{
   const first=new Memory(100,path);
-  assert.equal(first.snapshot().schemaVersion,2);
+  assert.equal(first.snapshot().schemaVersion,3);
   assert.equal(first.snapshot().notes.length,0);
   first.setOpportunities([{
     id:"test-opportunity",title:"Test MVP",customer:"Test customer",priceChf:39,mvpDays:1,
@@ -33,7 +33,7 @@ try{
   assert.equal(first.searchNotes("validation")[0]?.id,note.id);
   const second=new Memory(999,path);
   const restored=second.snapshot();
-  assert.equal(restored.schemaVersion,2);
+  assert.equal(restored.schemaVersion,3);
   assert.equal(restored.cashChf,100);
   assert.equal(restored.notes.length,1);
   assert.equal(restored.notes[0]?.text,"Prototype validation is the fastest first test.");
