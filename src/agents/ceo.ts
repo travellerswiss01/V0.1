@@ -5,7 +5,8 @@ import {research} from "./research.js";
 import {Memory} from "../core/memory.js";
 import {executeCodeAgent} from "./code-agent.js";
 import {researchMarket,rankMarketResearch} from "./market-intelligence.js";
-import {deriveCeoStrategy} from "../core/ceo-strategy.js";\nimport {createProductSpecification} from "./product-spec.js";
+import {deriveCeoStrategy} from "../core/ceo-strategy.js";
+import {createProductSpecification} from "./product-spec.js";
 
 
 export async function runCeoCycle(memory:Memory):Promise<Decision> {
@@ -50,6 +51,7 @@ export async function runCeoCycle(memory:Memory):Promise<Decision> {
   };
   memory.addDecision(decision);
 
-  if(decision.status==="approved"){\n    createProductSpecification(memory,decision);\n    await executeCodeAgent(memory,decision);\n  }
+  if(decision.status==="approved"){
+    createProductSpecification(memory,decision);\n    await executeCodeAgent(memory,decision);\n  }
   return decision;
 }
