@@ -88,7 +88,7 @@ export class Memory{
     if(this.state.growthEvents.some(item=>item.id===event.id || (event.externalEventId && item.externalEventId===event.externalEventId))) return structuredClone(this.state.growthEvents.find(item=>item.id===event.id || item.externalEventId===event.externalEventId)!);
     this.state.growthEvents.unshift(structuredClone(event));
     if(event.type==="revenue"){ const value=event.valueChf??0; this.state.revenueChf+=value; this.state.cashChf+=value; }
-    this.addNote("learning",`Growth event ${event.type} on ${event.channel}: opportunity ${event.opportunityId}${event.type==="revenue"?`, revenue CHF ${(event.valueChf??0).toFixed(2)}`:""}.`,"system");
+    this.addNote("learning",`Growth event ${event.type} on ${event.channel}: opportunity ${event.opportunityId}${event.type==="revenue"?`, revenue CHF ${(event.valueChf??0).toFixed(2)}`:""}.`,"system",{opportunityId:event.opportunityId});
     this.save(); return structuredClone(event);
   }
   growthPerformance(opportunityId?:string){
