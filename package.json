@@ -19,7 +19,8 @@
     "test:ceo-tools": "tsx src/core/ceo-tools.test.ts",
     "test:ceo-loop": "tsx src/core/ceo-loop.test.ts",
     "test:code-agent-2": "tsx src/core/code-agent-2.test.ts",
-    "test:code-review": "tsx src/core/code-review.test.ts"
+    "test:code-review": "tsx src/core/code-review.test.ts",
+    "test:automatic-fix-loop": "tsx src/core/automatic-fix-loop.test.ts"
   },
   "dependencies": {
     "@openai/agents": "^0.18.0",
