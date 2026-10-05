@@ -4,6 +4,7 @@ import type {Decision,Opportunity} from "../core/types.js";
 import {research} from "./research.js";
 import {Memory} from "../core/memory.js";
 import {executeCodeAgent} from "./code-agent.js";
+import {researchMarket,rankMarketResearch} from "./market-intelligence.js";
 
 function evaluate(opportunity:Opportunity,cashChf:number):number {
   const budgetFit=opportunity.estimatedCostChf<=cashChf?15:-40;
@@ -17,11 +18,18 @@ export async function runCeoCycle(memory:Memory):Promise<Decision> {
   const state=memory.snapshot();
   const candidates=research();
   memory.setOpportunities(candidates);
+  const marketReports=rankMarketResearch(candidates.map(researchMarket));
   const ranked=candidates
-    .map(opportunity=>({opportunity,decisionScore:evaluate(opportunity,state.cashChf)}))
+    .map(opportunity=>{
+      const market=marketReports.find(r=>r.opportunityId===opportunity.id)!;
+      return {opportunity,market,decisionScore:evaluate(opportunity,state.cashChf)+market.marketSizeScore*.15+market.demandScore*.15+market.competitionScore*.15};
+    })
+    .filter(x=>x.market.recommendation!=="reject")
     .sort((a,b)=>b.decisionScore-a.decisionScore);
 
+  if(!ranked.length) throw new Error("Market intelligence rejected all current opportunities.");
   const top=ranked[0].opportunity;
+  const topMarket=ranked[0].market;
   const alternatives=ranked.slice(1,3).map(x=>x.opportunity.title);
   const budget=top.estimatedCostChf;
   const action=`Validate and prototype: ${top.title}`;
@@ -32,7 +40,7 @@ export async function runCeoCycle(memory:Memory):Promise<Decision> {
 
   const decision:Decision={
     id:randomUUID(),cycle:state.cycle,action,
-    reason:`Selected from ${candidates.length} candidates. Decision score ${evaluate(top,state.cashChf)}. ${top.rationale}`,
+    reason:`Selected from ${candidates.length} candidates after market intelligence. Decision score ${Math.round(ranked[0].decisionScore)}; demand ${topMarket.demandScore}, competition ${topMarket.competitionScore}, willingness-to-pay ${topMarket.willingnessToPayScore}. ${top.rationale}`,
     expectedOutcome:`Validate demand for CHF ${top.priceChf} offer within ${top.mvpDays} day(s), with a maximum test budget of CHF ${budget}.`,
     confidence:Math.min(.97,.55+Math.max(0,top.score)/300),
     risk,approved,createdAt:new Date().toISOString(),
