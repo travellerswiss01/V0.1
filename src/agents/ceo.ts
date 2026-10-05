@@ -7,12 +7,6 @@ import {executeCodeAgent} from "./code-agent.js";
 import {researchMarket,rankMarketResearch} from "./market-intelligence.js";
 import {deriveCeoStrategy} from "../core/ceo-strategy.js";
 
-function evaluate(opportunity:Opportunity,cashChf:number):number {
-  const budgetFit=opportunity.estimatedCostChf<=cashChf?15:-40;
-  const speed=opportunity.mvpDays<=1?15:opportunity.mvpDays<=3?10:0;
-  const margin=opportunity.priceChf>opportunity.estimatedCostChf*2?10:0;
-  return opportunity.score+budgetFit+speed+margin;
-}
 
 export async function runCeoCycle(memory:Memory):Promise<Decision> {
   memory.nextCycle();
