@@ -22,7 +22,8 @@
     "test:code-review": "tsx src/core/code-review.test.ts",
     "test:automatic-fix-loop": "tsx src/core/automatic-fix-loop.test.ts",
     "test:control-room-2": "tsx src/core/control-room-2.test.ts",
-    "test:market-intelligence": "tsx src/core/market-intelligence.test.ts"
+    "test:market-intelligence": "tsx src/core/market-intelligence.test.ts",
+    "test:live-market-research": "tsx src/core/live-market-research.test.ts"
   },
   "dependencies": {
     "@openai/agents": "^0.18.0",
