@@ -73,7 +73,6 @@ export class Memory{
       if(!authorization.authorized) throw new Error(`Budget authorization denied: ${authorization.reason}`);
       this.state.cashChf-=result.costChf;
       this.state.costsChf+=result.costChf;
-      this.state.revenueChf+=Math.max(0,result.revenueChf??0);
     }
     this.state.executions.unshift(structuredClone(result));
     this.state.pendingApprovals=this.state.pendingApprovals.filter(id=>id!==result.decisionId);
@@ -113,7 +112,7 @@ export class Memory{
     const successes=history.filter(item=>item.status==="completed").length;
     const successRate=attempts?successes/attempts:0;
     const cost=history.reduce((sum,item)=>sum+item.costChf,0);
-    const revenue=history.reduce((sum,item)=>sum+Math.max(0,item.revenueChf??0),0);
+    const revenue=this.state.growthEvents.filter(event=>event.opportunityId===opportunityId&&event.type==="revenue").reduce((sum,event)=>sum+Math.max(0,event.valueChf??0),0);
     const profit=revenue-cost;
     const roi=cost===0?0:profit/cost;
     const economics=profit>0?"positive economics":profit<0?"negative economics":"break-even economics";
