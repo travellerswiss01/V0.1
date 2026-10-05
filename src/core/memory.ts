@@ -58,7 +58,6 @@ export class Memory{
   approveDecision(id:string):Decision|undefined{
     const decision=this.state.decisions.find(item=>item.id===id);
     if(!decision||decision.status!=="pending_approval") return undefined;
-    const available=this.budgetPolicy.available(this.state,id);
     if(decision.budgetChf>this.state.cashChf-this.budgetPolicy.reserved(this.state,id)) return undefined;
     decision.approved=true; decision.status="approved";
     this.appendLedger({type:"decision_approved",decisionId:id,status:"approved",action:decision.action,budgetChf:decision.budgetChf,risk:decision.risk,detail:"Explicit human approval granted within current budget."});
