@@ -56,16 +56,14 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "",
     "## Acceptance criteria",
     ...task.acceptanceCriteria.map(x=>`- ${x}`)
-  ].join("\n")+ "
-");
+  ].join("\n")+ "\n");
 
   writeFileSync(architecture,[
     "# Product Architecture","",
     "## Objective",task.objective,"",
     "## Components","- Customer input layer","- Core product logic","- Result/output layer","- Health check and validation","",
     "## Constraints","- MVP only","- No payments","- No production deployment","- No destructive operations"
-  ].join("\n")+"
-");
+  ].join("\n")+"\n");
 
   writeFileSync(product,[
     "export const product = {",
