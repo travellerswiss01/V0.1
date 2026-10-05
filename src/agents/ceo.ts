@@ -30,7 +30,10 @@ export async function runCeoCycle(memory:Memory):Promise<Decision> {
   const topMarket=ranked[0].market;
   const alternatives=ranked.slice(1,3).map(x=>x.opportunity.title);
   const budget=top.estimatedCostChf;
-  const action=`Validate and prototype: ${top.title}`;
+  const topPerformance=strategy.performance.find(p=>p.opportunityId===top.id);
+  const action=strategy.priority==="grow"
+    ?`Grow and monetise: ${top.title}`
+    :`Validate and prototype: ${top.title}`;
   const risk=classifyRisk(action);
   const affordable=budget<=state.cashChf;
   const approved=affordable&&!requiresApproval(risk);
@@ -42,8 +45,10 @@ export async function runCeoCycle(memory:Memory):Promise<Decision> {
 
   const decision:Decision={
     id:randomUUID(),cycle:state.cycle,action,
-    reason:`${strategy.rationale} Selected from ${candidates.length} candidates after market intelligence. Decision score ${Math.round(ranked[0].decisionScore)}; demand ${topMarket.demandScore}, competition ${topMarket.competitionScore}, willingness-to-pay ${topMarket.willingnessToPayScore}.${historySummary} ${top.rationale}`,
-    expectedOutcome:`Validate demand for CHF ${top.priceChf} offer within ${top.mvpDays} day(s), with a maximum test budget of CHF ${budget}.`,
+    reason:`${strategy.rationale} Selected from ${candidates.length} candidates after market intelligence. Decision score ${Math.round(ranked[0].decisionScore)}; demand ${topMarket.demandScore}, competition ${topMarket.competitionScore}, willingness-to-pay ${topMarket.willingnessToPayScore}.${historySummary} Growth funnel: leads ${topPerformance?.leads??0}, qualified ${topPerformance?.qualified??0}, customers ${topPerformance?.customers??0}, revenue CHF ${(topPerformance?.revenueChf??0).toFixed(2)}. ${top.rationale}`,
+    expectedOutcome:strategy.priority==="grow"
+      ?`Convert verified traction into additional customers and revenue for the CHF ${top.priceChf} offer, with a maximum controlled budget of CHF ${budget}.`
+      :`Validate demand for CHF ${top.priceChf} offer within ${top.mvpDays} day(s), with a maximum test budget of CHF ${budget}.`,
     confidence:Math.min(.97,.55+Math.max(0,top.score)/300),
     risk,approved,createdAt:new Date().toISOString(),
     opportunityId:top.id,opportunityScore:top.score,alternatives,
