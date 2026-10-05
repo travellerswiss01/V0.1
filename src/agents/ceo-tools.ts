@@ -106,6 +106,7 @@ export class CeoToolService {
   createProductSpec(decisionId:string){
     const decision=this.memory.snapshot().decisions.find(item=>item.id===decisionId);
     if(!decision) throw new Error("Decision not found.");
+    if(decision.status!=="approved"||!decision.approved) throw new Error("Product specification gate failed: only an approved decision can create a build specification.");
     return createProductSpecification(this.memory,decision);
   }
 
