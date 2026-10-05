@@ -80,6 +80,36 @@ export class Memory{
     this.state.notes.unshift(note); this.save(); return structuredClone(note);
   }
 
+  private recordExecutionLearning(result:ExecutionResult,decision?:Decision){
+    const existing=this.state.notes.find(note=>note.executionId===result.id);
+    if(existing) return;
+    const opportunityId=decision?.opportunityId;
+    const opportunity=this.state.opportunities.find(item=>item.id===opportunityId);
+    const history=this.state.executions.filter(item=>item.decisionId===result.decisionId);
+    const attempts=history.length;
+    const successes=history.filter(item=>item.status==="completed").length;
+    const successRate=attempts?successes/attempts:0;
+    const cost=history.reduce((sum,item)=>sum+item.costChf,0);
+    const revenue=history.reduce((sum,item)=>sum+Math.max(0,item.revenueChf??0),0);
+    const profit=revenue-cost;
+    const roi=cost===0?0:profit/cost;
+    const economics=profit>0?"positive economics":profit<0?"negative economics":"break-even economics";
+    const conclusion=result.status==="completed"
+      ? `Execution completed with ${economics}.`
+      : result.status==="failed"
+        ? "Execution failed; learn before increasing scope or spend."
+        : "Execution was blocked; resolve the blocker before retrying.";
+    const recommendation=result.status==="completed"&&profit>0
+      ? "Repeat or grow the opportunity with a controlled next test."
+      : result.status==="completed"
+        ? "Validate demand or pricing before spending more."
+        : "Investigate the failure or blocker with the cheapest reversible test.";
+    const title=opportunity?.title??decision?.opportunityId??"unknown opportunity";
+    this.addNote("learning",
+      `Execution ${result.id}: opportunity "${title}" (${opportunityId??"unknown"}). Attempts ${attempts}; success rate ${Math.round(successRate*100)}%; cost CHF ${cost.toFixed(2)}; revenue CHF ${revenue.toFixed(2)}; profit CHF ${profit.toFixed(2)}; ROI ${(roi*100).toFixed(1)}%. ${conclusion} Next: ${recommendation}`,
+      "execution",{executionId:result.id,opportunityId});
+  }
+
   searchNotes(query:string,limit=10):MemoryNote[]{
     const q=query.trim().toLowerCase();
     if(!q) return [];
