@@ -43,6 +43,12 @@ try{
   const published=service.publish(decision.id);
   assert.equal(published.status,"blocked");
 
+  const growth=service.prepareGrowth(opportunities[0].id,"Swiss SMBs","Test offer");
+  assert.equal(growth.status,"prepared");
+  memory.recordGrowthEvent({id:"growth-test",opportunityId:opportunities[0].id,channel:"b2b",type:"lead",timestamp:new Date().toISOString()});
+  memory.recordGrowthEvent({id:"revenue-test",opportunityId:opportunities[0].id,channel:"b2b",type:"revenue",valueChf:25,timestamp:new Date().toISOString(),externalEventId:"external-25"});
+  assert.equal(memory.growthPerformance(opportunities[0].id).revenueChf,25);
+
   const measurement=service.measure();
   assert.equal(measurement.completedExecutions,1);
 
