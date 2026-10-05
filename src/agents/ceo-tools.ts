@@ -35,7 +35,9 @@ export class CeoToolService {
       pendingApprovals:state.pendingApprovals,
       opportunities:state.opportunities,
       decisions:state.decisions.slice(0,10),
-      executions:state.executions.slice(0,10)
+      executions:state.executions.slice(0,10),
+      growthEvents:state.growthEvents.slice(0,20),
+      growthPerformance:this.memory.growthPerformance()
     };
   }
 
@@ -141,6 +143,8 @@ export class CeoToolService {
     const plan={opportunityId,targetCustomer,offer,primaryChannel:"b2b" as const,dailyBudgetChf:0,requiresApproval:true,successMetrics:["leads","qualified","replies","customers","revenueChf"]};
     return new GrowthAgent().prepare(plan);
   }
+
+  growthPerformance(opportunityId?:string){return this.memory.growthPerformance(opportunityId);}
 
   measure(){
     const state=this.memory.snapshot();
