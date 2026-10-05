@@ -23,7 +23,10 @@ try{
   const blocked=await service.buildProduct("missing-decision");
   assert.equal(blocked.status,"blocked");
 
-  const gateBlocked=await service.buildProduct(decision.id);\n  assert.equal(gateBlocked.status,"blocked");\n  assert.match(gateBlocked.reason,"Product specification gate failed");\n\n  const spec=service.createProductSpec(decision.id);\n  assert.ok(memory.snapshot().specifications.some(item=>item.decisionId===decision.id));
+  const gateBlocked=await service.buildProduct(decision.id);
+  assert.equal(gateBlocked.status,"blocked");\n  assert.match(gateBlocked.reason,"Product specification gate failed");
+
+  const spec=service.createProductSpec(decision.id);\n  assert.ok(memory.snapshot().specifications.some(item=>item.decisionId===decision.id));
   assert.equal(spec.pricingChf,opportunities[0].priceChf);
   assert.ok(spec.acceptanceCriteria.length>=4);
 
