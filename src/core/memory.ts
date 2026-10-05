@@ -148,6 +148,7 @@ export class Memory{
     this.appendLedger({type:entry.type,decisionId,status:entry.status,action,budgetChf,risk,detail:entry.detail}); this.save();
   }
 
+  getGrowthEvents(opportunityId?:string):GrowthEvent[]{return this.state.growthEvents.filter(item=>!opportunityId||item.opportunityId===opportunityId).map(item=>structuredClone(item));}
   getExecutionByDecisionId(decisionId:string):ExecutionResult|undefined{
     const execution=this.state.executions.find(item=>item.decisionId===decisionId); return execution?structuredClone(execution):undefined;
   }
