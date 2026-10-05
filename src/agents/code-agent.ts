@@ -9,6 +9,7 @@ import {createBuildTask} from "./build-task.js";
 import type {BuildTask} from "./build-task.js";
 import {publishWorkspaceToGitHub} from "./github-publisher.js";
 import {reviewCode} from "./code-review.js";
+import {automaticFixLoop} from "./automatic-fix-loop.js";
 import {ExecutionLock,withExecutionLock} from "../core/execution-lock.js";
 import type {Memory} from "../core/memory.js";
 
@@ -126,8 +127,7 @@ function validatePrototype(workspace:string):{build:boolean;test:boolean;prototy
 export async function runDeterministicCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
   const seeded=seedWorkspace(task);
   const checks=validatePrototype(seeded.workspace);
-  const review=await reviewCode(task,seeded.workspace,checks);
-  if(!review.approved) throw new Error(`Review gate did not pass: ${review.summary}`);
+  let review=await reviewCode(task,seeded.workspace,checks);\n  if(!review.approved){\n    const repair=await automaticFixLoop(task,seeded.workspace,checks,3,()=>validatePrototype(seeded.workspace));\n    review=repair.review;\n    if(!repair.approved) throw new Error(`Review gate did not pass after ${repair.rounds} repair round(s): ${review.summary}`);\n  }
   const github=process.env.GITHUB_PUBLISH_ENABLED==="true"
     ?await publishWorkspaceToGitHub(seeded.workspace,task.id,task.title,task.objective)
     :undefined;
@@ -218,9 +218,7 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
   let checks:{build:boolean;test:boolean;prototype:boolean};
   let review:CodeAgentResult["review"];
   try {
-    checks=validatePrototype(workspace);
-    review=await reviewCode(task,workspace,checks);
-    if(!review.approved) throw new Error(`Review gate did not pass: ${review.summary}`);
+    checks=validatePrototype(workspace);\n    review=await reviewCode(task,workspace,checks);\n    if(!review.approved){\n      const repair=await automaticFixLoop(task,workspace,checks,3,()=>validatePrototype(workspace));\n      review=repair.review;\n      if(!repair.approved) throw new Error(`Review gate did not pass after ${repair.rounds} repair round(s): ${review.summary}`);\n      checks=validatePrototype(workspace);\n    }
   } catch(error) {
     throw new Error(`AI coding agent final validation failed: ${error instanceof Error?error.message:String(error)}`);
   }
