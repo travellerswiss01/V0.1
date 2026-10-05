@@ -85,7 +85,10 @@ createServer(async(req,res)=>{
   if(req.method==="GET"&&req.url==="/api/state"){
     res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(memory.snapshot())); return;
   }
-  if(req.method==="GET"&&req.url==="/api/pipeline"){\n    res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(pipeline())); return;\n  }\n  if(req.method==="GET"&&req.url==="/api/ledger"){
+  if(req.method==="GET"&&req.url==="/api/pipeline"){
+    res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(pipeline())); return;
+  }
+  if(req.method==="GET"&&req.url==="/api/ledger"){
     res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(ledger())); return;
   }
   if(req.method==="POST"&&req.url==="/api/test-risk"){
