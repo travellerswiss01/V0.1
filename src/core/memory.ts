@@ -4,7 +4,7 @@ import {randomUUID} from "node:crypto";
 import type {CompanyState,Decision,ExecutionResult,Opportunity,LedgerEntry,MemoryNote} from "./types.js";
 import {BudgetPolicy} from "./budget.js";
 
-const SCHEMA_VERSION=2;
+const SCHEMA_VERSION=3;
 
 export class Memory{
   private state:CompanyState; private readonly path:string; private readonly budgetPolicy=new BudgetPolicy();
