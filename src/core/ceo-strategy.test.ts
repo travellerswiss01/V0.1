@@ -8,19 +8,19 @@ const base:CompanyState={
     {id:"cheap",title:"Cheap",customer:"x",priceChf:50,mvpDays:1,estimatedCostChf:10,competition:"low",automation:80,score:70,rationale:"fast"},
     {id:"new",title:"New",customer:"x",priceChf:40,mvpDays:2,estimatedCostChf:10,competition:"low",automation:70,score:60,rationale:"new"}
   ],
-  decisions:[],executions:[],pendingApprovals:[],ledger:[],notes:[]
+  decisions:[],executions:[],pendingApprovals:[],ledger:[],notes:[],specifications:[],growthEvents:[]
 };
 const strategy=deriveCeoStrategy(base);
 assert.equal(strategy.priority,"validate");
 assert.ok(strategy.scoreOpportunity(base.opportunities[0])>70);
 assert.ok(strategy.scoreOpportunity(base.opportunities[1])>60);
 
-const failed={...base,executions:[{id:"e1",decisionId:"d1",status:"failed",action:"x",startedAt:"",completedAt:"",costChf:5,output:""}],decisions:[{id:"d1",cycle:1,action:"x",reason:"",expectedOutcome:"",confidence:.8,risk:"low",approved:true,createdAt:"",opportunityId:"cheap",opportunityScore:70,alternatives:[],budgetChf:10,status:"approved"}]};
+const failed:CompanyState={...base,executions:[{id:"e1",decisionId:"d1",status:"failed",action:"x",startedAt:"",completedAt:"",costChf:5,output:""}],decisions:[{id:"d1",cycle:1,action:"x",reason:"",expectedOutcome:"",confidence:.8,risk:"low",approved:true,createdAt:"",opportunityId:"cheap",opportunityScore:70,alternatives:[],budgetChf:10,status:"approved"}]};
 const riskStrategy=deriveCeoStrategy(failed);
 assert.equal(riskStrategy.priority,"learn");
 assert.ok(riskStrategy.scoreOpportunity(base.opportunities[0])<strategy.scoreOpportunity(base.opportunities[0]));
 
-const successful={...base,
+const successful:CompanyState={...base,
   executions:[{id:"e2",decisionId:"d2",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:8,revenueChf:39,output:""}],
   decisions:[{id:"d2",cycle:1,action:"x",reason:"",expectedOutcome:"",confidence:.9,risk:"low",approved:true,createdAt:"",opportunityId:"cheap",opportunityScore:70,alternatives:[],budgetChf:10,status:"approved"}],
 };
@@ -35,7 +35,7 @@ assert.equal(learnedStrategy.performance[0].roi,39/8-1);
 assert.ok(learnedStrategy.scoreOpportunity(base.opportunities[0])>strategy.scoreOpportunity(base.opportunities[0]));
 
 
-const growthRevenue={...base,
+const growthRevenue:CompanyState={...base,
   schemaVersion:3,
   growthEvents:[{id:"g1",opportunityId:"cheap",channel:"b2b",type:"revenue",valueChf:120,timestamp:"2026-10-05T12:00:00.000Z",externalEventId:"verified-sale-1"}]
 };
@@ -45,13 +45,13 @@ assert.equal(growthStrategy.performance[0].profitChf,120);
 assert.equal(growthStrategy.performance[0].roi,0);
 assert.ok(growthStrategy.scoreOpportunity(base.opportunities[0])>strategy.scoreOpportunity(base.opportunities[0]));
 
-const expensiveHistory={...successful,
+const expensiveHistory:CompanyState={...successful,
   executions:[{id:"e3",decisionId:"d2",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:20,revenueChf:0,output:""}],
 };
 const costAware=deriveCeoStrategy(expensiveHistory);
 assert.ok(costAware.scoreOpportunity(base.opportunities[0])<learnedStrategy.scoreOpportunity(base.opportunities[0]));
 
-const repeatedlyTried={...base,
+const repeatedlyTried:CompanyState={...base,
   executions:[
     {id:"e4",decisionId:"d3",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:8,output:""},
     {id:"e5",decisionId:"d4",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:8,output:""},
