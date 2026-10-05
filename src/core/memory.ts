@@ -25,19 +25,19 @@ export class Memory{
   private emptyState(startingCapital:number):CompanyState{
     return {schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),cashChf:startingCapital,
       revenueChf:0,costsChf:0,cycle:0,opportunities:[],decisions:[],executions:[],
-      pendingApprovals:[],ledger:[],notes:[]};
+      pendingApprovals:[],ledger:[],notes:[],specifications:[]};
   }
 
   private migrate(input:Partial<CompanyState>,startingCapital:number):CompanyState{
     const base=this.emptyState(startingCapital);
     const migrated:CompanyState={...base,...input,schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString()};
     migrated.opportunities ??=[]; migrated.decisions ??=[]; migrated.executions ??=[];
-    migrated.pendingApprovals ??=[]; migrated.ledger ??=[]; migrated.notes ??=[];
+    migrated.pendingApprovals ??=[]; migrated.ledger ??=[]; migrated.notes ??=[]; migrated.specifications ??=[];
     return migrated;
   }
 
   snapshot(){return structuredClone(this.state);}
-  setOpportunities(items:Opportunity[]){this.state.opportunities=structuredClone(items);this.save();}
+  setOpportunities(items:Opportunity[]){this.state.opportunities=structuredClone(items);this.save();}\n  saveProductSpecification(spec:import("./types.js").ProductSpecification){\n    const index=this.state.specifications.findIndex(item=>item.decisionId===spec.decisionId);\n    if(index>=0) this.state.specifications[index]=structuredClone(spec); else this.state.specifications.unshift(structuredClone(spec));\n    this.save(); return structuredClone(spec);\n  }\n  getProductSpecification(decisionId:string){\n    const spec=this.state.specifications.find(item=>item.decisionId===decisionId);\n    return spec?structuredClone(spec):undefined;\n  }
 
   addDecision(d:Decision){
     this.state.decisions.unshift(structuredClone(d));
