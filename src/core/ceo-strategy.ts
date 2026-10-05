@@ -70,6 +70,9 @@ export function deriveCeoStrategy(state:CompanyState):CeoStrategy {
       if(repeatedFailures.has(opportunity.id)) score-=25;
       if(provenSuccesses.has(opportunity.id)) score+=10;
       if(history && history.successRate>0) score+=Math.min(20,history.successRate*20);
+      if(history && history.averageCostChf>opportunity.estimatedCostChf){
+        score-=Math.min(15,(history.averageCostChf-opportunity.estimatedCostChf)*2);
+      }
       if(priority==="learn") score-=opportunity.estimatedCostChf*.5;
       if(priority==="preserve_cash") score-=opportunity.estimatedCostChf*10;
       return score;
