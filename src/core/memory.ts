@@ -77,6 +77,7 @@ export class Memory{
       this.state.revenueChf+=Math.max(0,result.revenueChf??0);
     }
     this.state.executions.unshift(structuredClone(result));
+    this.recordExecutionLearning(result,decision);
     this.state.pendingApprovals=this.state.pendingApprovals.filter(id=>id!==result.decisionId);
     const decision=this.state.decisions.find(d=>d.id===result.decisionId);
     this.appendLedger({type:"execution_recorded",decisionId:result.decisionId,status:result.status,action:result.action,budgetChf:result.costChf,risk:decision?.risk??"low",detail:result.output});
@@ -97,8 +98,8 @@ export class Memory{
     return {leads:count("lead"),contacts:count("contact"),replies:count("reply"),qualified:count("qualified"),offers:count("offer"),customers:count("customer"),revenueChf:events.reduce((sum,item)=>sum+(item.type==="revenue"?item.valueChf??0:0),0)};
   }
 
-  addNote(category:MemoryNote["category"],text:string,source:MemoryNote["source"]="system"):MemoryNote{
-    const note:MemoryNote={id:randomUUID(),createdAt:new Date().toISOString(),category,text:text.trim(),cycle:this.state.cycle,source};
+  addNote(category:MemoryNote["category"],text:string,source:MemoryNote["source"]="system",meta?:Pick<MemoryNote,"executionId"|"opportunityId">):MemoryNote{
+    const note:MemoryNote={id:randomUUID(),createdAt:new Date().toISOString(),category,text:text.trim(),cycle:this.state.cycle,source,...meta};
     if(!note.text) throw new Error("Memory note cannot be empty.");
     this.state.notes.unshift(note); this.save(); return structuredClone(note);
   }
