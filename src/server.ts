@@ -19,6 +19,7 @@ const ledger=()=>memory.getLedger();
 const activityFeed=()=>activity(memory.snapshot());
 const productView=()=>products(memory.snapshot());
 const repairHistory=()=>repairs(memory.snapshot());
+const metrics=()=>companyMetrics(memory.snapshot());
 
 const pipeline=()=>{
   const s=memory.snapshot();
@@ -60,6 +61,7 @@ small{color:#737d8c}.mono{font-family:ui-monospace,SFMono-Regular,monospace;font
 </style></head><body>
 <h1>CONTROL PANEL</h1><p>Autonomous Company V0.1 · Decision Ledger · Coding agent: <b>${escapeHtml(process.env.AI_CODING_AGENT_ENABLED==="true"?"AI":"deterministic")}</b></p>
 <div class="grid">${cards.map(([l,v])=>`<div class="card"><div class="label">${l}</div><div class="value">${escapeHtml(v)}</div></div>`).join("")}</div>
+<div class="panel"><h2>Business Metrics</h2><div class="grid" style="grid-template-columns:repeat(4,1fr);margin:12px 0 0">${[["OPPORTUNITIES",metrics().opportunities],["APPROVED",metrics().approvedDecisions],["BUILT",metrics().productsBuilt],["COMPLETED",metrics().completedExecutions]].map(([l,v])=>`<div class="card"><div class="label">${l}</div><div class="value">${escapeHtml(v)}</div></div>`).join("")}</div><p><small>Decision → execution conversion: ${Math.round(metrics().conversionToExecution*100)}% · Revenue is ${metrics().revenueChf.toFixed(2)} CHF.</small></p></div>
 <div class="panel"><h2>Autonomy Pipeline</h2><div class="grid" style="grid-template-columns:repeat(4,1fr);margin:12px 0 0">
 ${[["DECISION",pipeline().decision],["EXECUTION",pipeline().execution],["CODE REVIEW",pipeline().review],["REVIEW SCORE",pipeline().reviewScore===null?"—":String(pipeline().reviewScore)]].map(([l,v])=>`<div class="card"><div class="label">${l}</div><div class="value">${escapeHtml(v)}</div></div>`).join("")}
 </div><p><small>Current stage: ${escapeHtml(pipeline().stage)} · Cycle ${pipeline().cycle}</small></p></div>
@@ -89,6 +91,7 @@ createServer(async(req,res)=>{
   if(req.method==="GET"&&req.url==="/api/state"){
     res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(memory.snapshot())); return;
   }
+  if(req.method==="GET"&&req.url==="/api/metrics"){res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(metrics())); return;}
   if(req.method==="GET"&&req.url==="/api/pipeline"){
     res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(pipeline())); return;
   }
