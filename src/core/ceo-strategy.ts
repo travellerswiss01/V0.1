@@ -1,25 +1,47 @@
 import type {CompanyState,Opportunity} from "./types.js";
 import {companyMetrics,type CompanyMetrics} from "./company-metrics.js";
 
+export interface OpportunityPerformance {
+  opportunityId:string;
+  attempts:number;
+  successes:number;
+  failures:number;
+  successRate:number;
+  averageCostChf:number;
+}
+
 export interface CeoStrategy {
   metrics:CompanyMetrics;
   priority:"build"|"validate"|"learn"|"preserve_cash";
   rationale:string;
+  performance:OpportunityPerformance[];
   scoreOpportunity:(opportunity:Opportunity)=>number;
+}
+
+function performanceFor(state:CompanyState):OpportunityPerformance[]{
+  const byOpportunity=new Map<string,{attempts:number;successes:number;failures:number;cost:number}>();
+  for(const execution of state.executions){
+    const opportunityId=state.decisions.find(d=>d.id===execution.decisionId)?.opportunityId;
+    if(!opportunityId) continue;
+    const row=byOpportunity.get(opportunityId)??{attempts:0,successes:0,failures:0,cost:0};
+    row.attempts++;
+    if(execution.status==="completed") row.successes++;
+    if(execution.status==="failed") row.failures++;
+    row.cost+=execution.costChf;
+    byOpportunity.set(opportunityId,row);
+  }
+  return [...byOpportunity.entries()].map(([opportunityId,row])=>({
+    opportunityId,attempts:row.attempts,successes:row.successes,failures:row.failures,
+    successRate:row.attempts?row.successes/row.attempts:0,
+    averageCostChf:row.attempts?row.cost/row.attempts:0
+  }));
 }
 
 export function deriveCeoStrategy(state:CompanyState):CeoStrategy {
   const metrics=companyMetrics(state);
-  const repeatedFailures=new Set(
-    state.executions.filter(e=>e.status==="failed").map(e=>{
-      return state.decisions.find(d=>d.id===e.decisionId)?.opportunityId;
-    }).filter((id):id is string=>Boolean(id))
-  );
-  const repeatedSuccesses=new Set(
-    state.executions.filter(e=>e.status==="completed").map(e=>{
-      return state.decisions.find(d=>d.id===e.decisionId)?.opportunityId;
-    }).filter((id):id is string=>Boolean(id))
-  );
+  const performance=performanceFor(state);
+  const repeatedFailures=new Set(performance.filter(p=>p.failures>0&&p.successes===0).map(p=>p.opportunityId));
+  const provenSuccesses=new Set(performance.filter(p=>p.successes>0&&p.successRate>=0.5).map(p=>p.opportunityId));
 
   let priority:CeoStrategy["priority"]="validate";
   if(metrics.cashChf<=0) priority="preserve_cash";
@@ -37,15 +59,17 @@ export function deriveCeoStrategy(state:CompanyState):CeoStrategy {
         ?"No completed execution has established a winning pattern yet; prioritise fast, affordable validation.";
 
   return {
-    metrics,priority,rationale,
+    metrics,priority,rationale,performance,
     scoreOpportunity:(opportunity)=>{
       let score=opportunity.score;
+      const history=performance.find(p=>p.opportunityId===opportunity.id);
       if(opportunity.estimatedCostChf>metrics.cashChf) score-=100;
       if(opportunity.mvpDays<=1) score+=15;
       else if(opportunity.mvpDays<=3) score+=10;
       if(opportunity.priceChf>opportunity.estimatedCostChf*2) score+=10;
       if(repeatedFailures.has(opportunity.id)) score-=25;
-      if(repeatedSuccesses.has(opportunity.id)) score+=10;
+      if(provenSuccesses.has(opportunity.id)) score+=10;
+      if(history && history.successRate>0) score+=Math.min(20,history.successRate*20);
       if(priority==="learn") score-=opportunity.estimatedCostChf*.5;
       if(priority==="preserve_cash") score-=opportunity.estimatedCostChf*10;
       return score;
