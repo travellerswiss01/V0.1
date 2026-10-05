@@ -303,7 +303,7 @@ export async function executeCodeAgent(memory:{
           workspace:result.workspace,
           files:result.files,
           checks:result.checks,
-          review:result.review,
+          review:{...result.review,findings:result.review.findings.map(f=>`${f.title}: ${f.detail}`)},
           mode:result.mode,
           github:result.github
         }
