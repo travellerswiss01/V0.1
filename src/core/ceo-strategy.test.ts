@@ -4,7 +4,10 @@ import type {CompanyState} from "./types.js";
 
 const base:CompanyState={
   schemaVersion:2,updatedAt:new Date().toISOString(),cashChf:100,revenueChf:0,costsChf:0,cycle:2,
-  opportunities:[{id:"cheap",title:"Cheap",customer:"x",priceChf:50,mvpDays:1,estimatedCostChf:10,competition:"low",automation:80,score:70,rationale:"fast"}],
+  opportunities:[
+    {id:"cheap",title:"Cheap",customer:"x",priceChf:50,mvpDays:1,estimatedCostChf:10,competition:"low",automation:80,score:70,rationale:"fast"},
+    {id:"new",title:"New",customer:"x",priceChf:40,mvpDays:2,estimatedCostChf:10,competition:"low",automation:70,score:60,rationale:"new"}
+  ],
   decisions:[],executions:[],pendingApprovals:[],ledger:[],notes:[]
 };
 const strategy=deriveCeoStrategy(base);
@@ -27,4 +30,10 @@ assert.equal(learnedStrategy.performance[0].successRate,1);
 assert.equal(learnedStrategy.performance[0].averageCostChf,8);
 assert.ok(learnedStrategy.scoreOpportunity(base.opportunities[0])>strategy.scoreOpportunity(base.opportunities[0]));
 
-console.log(JSON.stringify({status:"passed",initialPriority:strategy.priority,failurePriority:riskStrategy.priority,learnedSuccessRate:learnedStrategy.performance[0].successRate}));
+const expensiveHistory={...successful,
+  executions:[{id:"e3",decisionId:"d2",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:20,output:""}],
+};
+const costAware=deriveCeoStrategy(expensiveHistory);
+assert.ok(costAware.scoreOpportunity(base.opportunities[0])<learnedStrategy.scoreOpportunity(base.opportunities[0]));
+
+console.log(JSON.stringify({status:"passed",initialPriority:strategy.priority,failurePriority:riskStrategy.priority,learnedSuccessRate:learnedStrategy.performance[0].successRate,costAware:true}));
