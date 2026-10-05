@@ -16,4 +16,15 @@ const riskStrategy=deriveCeoStrategy(failed);
 assert.equal(riskStrategy.priority,"learn");
 assert.ok(riskStrategy.scoreOpportunity(base.opportunities[0])<strategy.scoreOpportunity(base.opportunities[0]));
 
-console.log(JSON.stringify({status:"passed",initialPriority:strategy.priority,failurePriority:riskStrategy.priority}));
+const successful={...base,
+  executions:[{id:"e2",decisionId:"d2",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:8,output:""}],
+  decisions:[{id:"d2",cycle:1,action:"x",reason:"",expectedOutcome:"",confidence:.9,risk:"low",approved:true,createdAt:"",opportunityId:"cheap",opportunityScore:70,alternatives:[],budgetChf:10,status:"approved"}],
+};
+const learnedStrategy=deriveCeoStrategy(successful);
+assert.equal(learnedStrategy.performance.length,1);
+assert.equal(learnedStrategy.performance[0].opportunityId,"cheap");
+assert.equal(learnedStrategy.performance[0].successRate,1);
+assert.equal(learnedStrategy.performance[0].averageCostChf,8);
+assert.ok(learnedStrategy.scoreOpportunity(base.opportunities[0])>strategy.scoreOpportunity(base.opportunities[0]));
+
+console.log(JSON.stringify({status:"passed",initialPriority:strategy.priority,failurePriority:riskStrategy.priority,learnedSuccessRate:learnedStrategy.performance[0].successRate}));
