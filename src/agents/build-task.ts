@@ -1,5 +1,5 @@
 import type { Decision } from "../core/types.js";
-import {createProductSpecification,specificationToPrompt} from "./product-spec.js";
+import {specificationToPrompt} from "./product-spec.js";
 import {Memory} from "../core/memory.js";
 
 export interface BuildTask {
@@ -13,8 +13,8 @@ export function createBuildTask(decision:Decision,memory?:Memory):BuildTask {
     decisionId:decision.id,
     opportunityId:decision.opportunityId,
     title:decision.action,
-    objective:spec?specificationToPrompt(spec):decision.expectedOutcome,
-    acceptanceCriteria:spec?.acceptanceCriteria??[
+    objective:specificationToPrompt(spec),
+    acceptanceCriteria:spec.acceptanceCriteria??[
       "Create a runnable product prototype workspace.",
       "Document the selected opportunity and intended customer.",
       "Run the repository build and test suite before reporting success."
