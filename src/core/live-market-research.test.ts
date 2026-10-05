@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import {research} from "../agents/research.js";
+import {buildResearchQueries,mergeEvidence,rankLiveResearch} from "../agents/live-market-research.js";
+const o=research()[0];
+const q=buildResearchQueries(o);
+assert.equal(q.length,3);
+const r=mergeEvidence(o,[{query:q[0],title:"Competitor pricing",source:"web",url:"https://example.com",snippet:"Pricing and alternatives",relevance:.9}]);
+assert.ok(r.adjustedScore>=0);
+assert.equal(rankLiveResearch([r]).length,1);
+console.log("live market research tests passed");
