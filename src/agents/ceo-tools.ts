@@ -1,7 +1,7 @@
 import {randomUUID} from "node:crypto";
 import {tool} from "@openai/agents";
 import {z} from "zod";
-import type {Decision, Opportunity} from "../core/types.js";
+import type {Decision, Opportunity, GrowthEventType, SalesChannel} from "../core/types.js";
 import {Memory} from "../core/memory.js";
 import {research} from "./research.js";
 import {executeCodeAgent} from "./code-agent.js";
@@ -146,6 +146,11 @@ export class CeoToolService {
 
   growthPerformance(opportunityId?:string){return this.memory.growthPerformance(opportunityId);}
 
+  recordGrowthEvent(input:{opportunityId:string;channel:SalesChannel;type:GrowthEventType;valueChf?:number;externalEventId?:string}){
+    const event={id:randomUUID(),timestamp:new Date().toISOString(),...input};
+    return this.memory.recordGrowthEvent(event);
+  }
+
   measure(){
     const state=this.memory.snapshot();
     return {
@@ -172,6 +177,7 @@ export function createCeoTools(memory:Memory){
     tool({name:"publish",description:"Verify guarded GitHub draft publication for a completed approved execution. This tool never merges or deploys production.",parameters:z.object({decisionId:z.string()}),execute:async({decisionId})=>service.publish(decisionId)}),
     tool({name:"prepare_growth",description:"Prepare an approval-gated growth plan and measurable acquisition funnel. No outreach or spend is executed automatically.",parameters:z.object({opportunityId:z.string(),targetCustomer:z.string(),offer:z.string()}),execute:async({opportunityId,targetCustomer,offer})=>service.prepareGrowth(opportunityId,targetCustomer,offer)}),
     tool({name:"growth_performance",description:"Read persistent growth funnel and revenue events, optionally scoped to one opportunity.",parameters:z.object({opportunityId:z.string().optional()}),execute:async({opportunityId})=>service.growthPerformance(opportunityId)}),
+    tool({name:"record_growth_event",description:"Record a verified funnel or revenue event into persistent company memory. Revenue increases cash and revenue; duplicate external event IDs are ignored.",parameters:z.object({opportunityId:z.string(),channel:z.enum(["b2b","seo","social","community","partnerships","paid_ads"]),type:z.enum(["lead","contact","reply","qualified","offer","customer","revenue"]),valueChf:z.number().nonnegative().optional(),externalEventId:z.string().optional()}),execute:async(input)=>service.recordGrowthEvent(input)}),
     tool({name:"measure",description:"Return current company KPI measurements from persistent state.",parameters:z.object({}),execute:async()=>service.measure()})
   ];
 }
