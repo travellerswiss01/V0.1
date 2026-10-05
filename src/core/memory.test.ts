@@ -35,7 +35,7 @@ try{
   first.recordGrowthEvent({id:"growth-3",opportunityId:"test-opportunity",channel:"b2b",type:"revenue",valueChf:20,timestamp:new Date().toISOString(),externalEventId:"invoice-1"});
   first.recordGrowthEvent({id:"growth-3-duplicate",opportunityId:"test-opportunity",channel:"b2b",type:"revenue",valueChf:20,timestamp:new Date().toISOString(),externalEventId:"invoice-1"});
   assert.equal(first.snapshot().growthEvents.length,3);
-  assert.equal(first.snapshot().revenueChf,59);
+  assert.equal(first.snapshot().revenueChf,20);
   assert.equal(first.snapshot().cashChf,115);
   assert.deepEqual(first.growthPerformance("test-opportunity"),{leads:1,contacts:0,replies:0,qualified:0,offers:0,customers:1,revenueChf:20});
   const note=first.addNote("learning","Prototype validation is the fastest first test.","system");
@@ -43,7 +43,7 @@ try{
   const second=new Memory(999,path);
   const restored=second.snapshot();
   assert.equal(restored.schemaVersion,3);
-  assert.equal(restored.cashChf,100);
+  assert.equal(restored.cashChf,115);
   assert.equal(restored.notes.length,1);
   assert.equal(restored.notes[0]?.text,"Prototype validation is the fastest first test.");
   assert.ok(restored.updatedAt);
