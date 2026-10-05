@@ -34,6 +34,12 @@ function performanceFor(state:CompanyState):OpportunityPerformance[]{
     row.revenue+=Math.max(0,execution.revenueChf??0);
     byOpportunity.set(opportunityId,row);
   }
+  for(const event of state.growthEvents ?? []){
+    if(event.type!=="revenue") continue;
+    const row=byOpportunity.get(event.opportunityId)??{attempts:0,successes:0,failures:0,cost:0,revenue:0};
+    row.revenue+=Math.max(0,event.valueChf??0);
+    byOpportunity.set(event.opportunityId,row);
+  }
   return [...byOpportunity.entries()].map(([opportunityId,row])=>{
     const profitChf=row.revenue-row.cost;
     return {
