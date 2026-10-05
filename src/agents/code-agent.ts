@@ -73,8 +73,7 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "};",
     "",
     "export function healthCheck():boolean { return Boolean(product.name && product.opportunityId); }"
-  ].join("\n")+ "
-");
+  ].join("\n")+"\n");
 
   writeFileSync(test,[
     'import {strict as assert} from "node:assert";',
@@ -82,8 +81,7 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "",
     'assert.equal(healthCheck(),true);',
     'console.log("Prototype health check passed.");'
-  ].join("\n")+ "
-");
+  ].join("\n")+"\n");
 
   return {workspace,readme,product,test,architecture};
 }
