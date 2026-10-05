@@ -22,13 +22,13 @@ try{
   });
   const execution=first.addExecution({
     id:"execution-1",decisionId:"decision-1",status:"completed",action:"Build Test MVP",
-    startedAt:new Date().toISOString(),completedAt:new Date().toISOString(),costChf:5,revenueChf:39,output:"Built"
+    startedAt:new Date().toISOString(),completedAt:new Date().toISOString(),costChf:5,output:"Built"
   });
   const learning=first.snapshot().notes.find(note=>note.executionId===execution.id);
   assert.ok(learning);
   assert.equal(learning?.opportunityId,"test-opportunity");
-  assert.match(learning?.text??"",/profit CHF 34\.00/);
-  assert.match(learning?.text??"",/ROI 680\.0%/);
+  assert.match(learning?.text??"",/profit CHF -5\.00/);
+  assert.match(learning?.text??"",/ROI -100\.0%/);
   assert.equal(first.snapshot().notes.filter(note=>note.executionId==="execution-1").length,1);
   first.recordGrowthEvent({id:"growth-1",opportunityId:"test-opportunity",channel:"b2b",type:"lead",timestamp:new Date().toISOString()});
   first.recordGrowthEvent({id:"growth-2",opportunityId:"test-opportunity",channel:"b2b",type:"customer",timestamp:new Date().toISOString()});
