@@ -9,13 +9,22 @@ export interface Opportunity {
   estimatedCostChf:number; competition:"low"|"medium"|"high"; automation:number;
   score:number; rationale:string;
 }
-export interface ProductSpecification {\n  id:string; decisionId:string; opportunityId:string; createdAt:string;\n  targetCustomer:string; problem:string; valueProposition:string;\n  features:string[]; userFlow:string[]; acceptanceCriteria:string[];\n  pricingChf:number; mvpScope:string[]; outOfScope:string[];\n}\nexport interface Decision {
+export interface ProductSpecification {
+  id:string; decisionId:string; opportunityId:string; createdAt:string;
+  targetCustomer:string; problem:string; valueProposition:string;
+  features:string[]; userFlow:string[]; acceptanceCriteria:string[];
+  pricingChf:number; mvpScope:string[]; outOfScope:string[];
+}
+export interface Decision {
   id:string; cycle:number; action:string; reason:string; expectedOutcome:string;
   confidence:number; risk:RiskLevel; approved:boolean; createdAt:string;
   opportunityId:string; opportunityScore:number; alternatives:string[];
   budgetChf:number; status:"approved"|"pending_approval"|"rejected";
 }
-export interface CodeReviewArtifact {\n  approved:boolean; score:number; findings:string[]; mode:"ai"|"deterministic"; summary:string;\n}\nexport interface ExecutionResult {
+export interface CodeReviewArtifact {
+  approved:boolean; score:number; findings:string[]; mode:"ai"|"deterministic"; summary:string;
+}
+export interface ExecutionResult {
   id:string; decisionId:string; status:"completed"|"blocked"|"failed";
   action:string; startedAt:string; completedAt:string; costChf:number;
   output:string; error?:string; attempt?:number; maxAttempts?:number;
