@@ -7,6 +7,7 @@ import {executeCodeAgent} from "./code-agent.js";
 import {researchMarket,rankMarketResearch} from "./market-intelligence.js";
 import {deriveCeoStrategy} from "../core/ceo-strategy.js";
 import {createProductSpecification} from "./product-spec.js";
+import {GrowthAgent} from "../growth/growth-agent.js";
 
 
 export async function runCeoCycle(memory:Memory):Promise<Decision> {
@@ -57,8 +58,23 @@ export async function runCeoCycle(memory:Memory):Promise<Decision> {
   memory.addDecision(decision);
 
   if(decision.status==="approved"){
-    createProductSpecification(memory,decision);
-    await executeCodeAgent(memory,decision);
+    if(strategy.priority==="grow"){
+      const growth=new GrowthAgent().prepare({
+        opportunityId:top.id,
+        targetCustomer:top.customer,
+        offer:`CHF ${top.priceChf} offer`,
+        primaryChannel:"b2b",
+        dailyBudgetChf:0,
+        requiresApproval:true,
+        successMetrics:["leads","qualified","customers","revenueChf"]
+      });
+      memory.addNote("observation",
+        `CEO selected growth for opportunity "${top.title}". Growth status: ${growth.status}. ${growth.reason}`,
+        "system",{opportunityId:top.id});
+    }else{
+      createProductSpecification(memory,decision);
+      await executeCodeAgent(memory,decision);
+    }
   }
   return decision;
 }
