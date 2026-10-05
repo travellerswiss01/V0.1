@@ -21,8 +21,9 @@ assert.equal(riskStrategy.priority,"learn");
 assert.ok(riskStrategy.scoreOpportunity(base.opportunities[0])<strategy.scoreOpportunity(base.opportunities[0]));
 
 const successful:CompanyState={...base,
-  executions:[{id:"e2",decisionId:"d2",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:8,revenueChf:39,output:""}],
+  executions:[{id:"e2",decisionId:"d2",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:8,output:""}],
   decisions:[{id:"d2",cycle:1,action:"x",reason:"",expectedOutcome:"",confidence:.9,risk:"low",approved:true,createdAt:"",opportunityId:"cheap",opportunityScore:70,alternatives:[],budgetChf:10,status:"approved"}],
+  growthEvents:[{id:"g2",opportunityId:"cheap",channel:"b2b",type:"lead",timestamp:"",externalEventId:"lead-2"},{id:"g3",opportunityId:"cheap",channel:"b2b",type:"customer",timestamp:"",externalEventId:"customer-2"},{id:"g4",opportunityId:"cheap",channel:"b2b",type:"revenue",valueChf:39,timestamp:"",externalEventId:"revenue-2"}]
 };
 const learnedStrategy=deriveCeoStrategy(successful);
 assert.equal(learnedStrategy.performance.length,1);
@@ -32,6 +33,10 @@ assert.equal(learnedStrategy.performance[0].averageCostChf,8);
 assert.equal(learnedStrategy.performance[0].revenueChf,39);
 assert.equal(learnedStrategy.performance[0].profitChf,31);
 assert.equal(learnedStrategy.performance[0].roi,39/8-1);
+assert.equal(learnedStrategy.priority,"grow");
+assert.equal(learnedStrategy.performance[0].customers,1);
+assert.equal(learnedStrategy.performance[0].leads,1);
+assert.equal(learnedStrategy.performance[0].funnelConversion,1);
 assert.ok(learnedStrategy.scoreOpportunity(base.opportunities[0])>strategy.scoreOpportunity(base.opportunities[0]));
 
 
