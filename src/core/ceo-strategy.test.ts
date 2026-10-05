@@ -21,7 +21,7 @@ assert.equal(riskStrategy.priority,"learn");
 assert.ok(riskStrategy.scoreOpportunity(base.opportunities[0])<strategy.scoreOpportunity(base.opportunities[0]));
 
 const successful={...base,
-  executions:[{id:"e2",decisionId:"d2",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:8,output:""}],
+  executions:[{id:"e2",decisionId:"d2",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:8,revenueChf:39,output:""}],
   decisions:[{id:"d2",cycle:1,action:"x",reason:"",expectedOutcome:"",confidence:.9,risk:"low",approved:true,createdAt:"",opportunityId:"cheap",opportunityScore:70,alternatives:[],budgetChf:10,status:"approved"}],
 };
 const learnedStrategy=deriveCeoStrategy(successful);
@@ -29,10 +29,13 @@ assert.equal(learnedStrategy.performance.length,1);
 assert.equal(learnedStrategy.performance[0].opportunityId,"cheap");
 assert.equal(learnedStrategy.performance[0].successRate,1);
 assert.equal(learnedStrategy.performance[0].averageCostChf,8);
+assert.equal(learnedStrategy.performance[0].revenueChf,39);
+assert.equal(learnedStrategy.performance[0].profitChf,31);
+assert.equal(learnedStrategy.performance[0].roi,39/8-1);
 assert.ok(learnedStrategy.scoreOpportunity(base.opportunities[0])>strategy.scoreOpportunity(base.opportunities[0]));
 
 const expensiveHistory={...successful,
-  executions:[{id:"e3",decisionId:"d2",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:20,output:""}],
+  executions:[{id:"e3",decisionId:"d2",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:20,revenueChf:0,output:""}],
 };
 const costAware=deriveCeoStrategy(expensiveHistory);
 assert.ok(costAware.scoreOpportunity(base.opportunities[0])<learnedStrategy.scoreOpportunity(base.opportunities[0]));
@@ -50,10 +53,6 @@ const repeatedlyTried={...base,
   ]
 };
 const explorationStrategy=deriveCeoStrategy(repeatedlyTried);
-assert.ok(
-  explorationStrategy.scoreOpportunity(base.opportunities[1]) >
-  explorationStrategy.scoreOpportunity(base.opportunities[0]),
-  "A new opportunity should beat an repeatedly-tested opportunity when their base scores are close."
-);
+assert.ok(explorationStrategy.scoreOpportunity(base.opportunities[1])>explorationStrategy.scoreOpportunity(base.opportunities[0]));
 
-console.log(JSON.stringify({status:"passed",initialPriority:strategy.priority,failurePriority:riskStrategy.priority,learnedSuccessRate:learnedStrategy.performance[0].successRate,costAware:true,explorationBias:true}));
+console.log(JSON.stringify({status:"passed",initialPriority:strategy.priority,failurePriority:riskStrategy.priority,learnedSuccessRate:learnedStrategy.performance[0].successRate,revenue:39,profit:31,roi:39/8-1,costAware:true,explorationBias:true}));
