@@ -52,6 +52,8 @@ export async function runCeoCycle(memory:Memory):Promise<Decision> {
   memory.addDecision(decision);
 
   if(decision.status==="approved"){
-    createProductSpecification(memory,decision);\n    await executeCodeAgent(memory,decision);\n  }
+    createProductSpecification(memory,decision);
+    await executeCodeAgent(memory,decision);
+  }
   return decision;
 }
