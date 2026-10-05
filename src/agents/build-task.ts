@@ -7,7 +7,7 @@ export interface BuildTask {
 }
 
 export function createBuildTask(decision:Decision,memory?:Memory):BuildTask {
-  const spec=memory?createProductSpecification(memory,decision):undefined;
+  const spec=memory?memory.getProductSpecification(decision.id):undefined;
   return {
     id:decision.id,
     decisionId:decision.id,
