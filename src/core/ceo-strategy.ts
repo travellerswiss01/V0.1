@@ -56,7 +56,7 @@ export function deriveCeoStrategy(state:CompanyState):CeoStrategy {
       ?"Execution failure rate is at least 50%; favour cheap, reversible learning before increasing scope."
       :priority==="build"
         ?"The execution loop has produced successful results; favour opportunities with stronger economics and proven execution patterns."
-        ?"No completed execution has established a winning pattern yet; prioritise fast, affordable validation.";
+        :"No completed execution has established a winning pattern yet; prioritise fast, affordable validation.";
 
   return {
     metrics,priority,rationale,performance,
