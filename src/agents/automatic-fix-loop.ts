@@ -47,7 +47,7 @@ function deterministicFix(task:BuildTask,workspace:string,review:CodeReviewResul
   return fixes;
 }
 
-export async function automaticFixLoop(task:BuildTask,workspace:string,checks:{build:boolean;test:boolean;prototype:boolean},maxRounds=3):Promise<AutomaticFixResult>{
+export async function automaticFixLoop(task:BuildTask,workspace:string,checks:{build:boolean;test:boolean;prototype:boolean},maxRounds=3,validate?:()=>{build:boolean;test:boolean;prototype:boolean}):Promise<AutomaticFixResult>{
   let review=await reviewCode(task,workspace,checks);
   const fixes:string[]=[];
   if(review.approved)return {approved:true,rounds:0,review,mode:"deterministic",fixes};
