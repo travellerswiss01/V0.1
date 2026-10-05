@@ -42,7 +42,7 @@ export interface LedgerEntry {
 }
 export interface MemoryNote {
   id:string; createdAt:string; category:"learning"|"observation"|"constraint";
-  text:string; cycle:number; source:"human"|"system"|"execution";
+  text:string; cycle:number; source:"human"|"system"|"execution";\n  executionId?:string; opportunityId?:string;
 }
 export interface CompanyState {
   schemaVersion:number; updatedAt:string;
