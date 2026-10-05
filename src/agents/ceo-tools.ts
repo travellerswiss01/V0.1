@@ -7,6 +7,7 @@ import {research} from "./research.js";
 import {executeCodeAgent} from "./code-agent.js";
 import {classifyRisk,requiresApproval} from "../core/policy.js";
 import {createProductSpecification} from "./product-spec.js";
+import {GrowthAgent} from "../growth/growth-agent.js";
 
 function decisionScore(opportunity:Opportunity,cashChf:number):number {
   const budgetFit=opportunity.estimatedCostChf<=cashChf?15:-40;
@@ -135,6 +136,11 @@ export class CeoToolService {
     return {status:"published_as_draft",github:execution.artifacts.github,message:"GitHub publication is draft-only; this tool never merges to production."};
   }
 
+  prepareGrowth(opportunityId:string,targetCustomer:string,offer:string){
+    const plan={opportunityId,targetCustomer,offer,primaryChannel:"b2b" as const,dailyBudgetChf:0,requiresApproval:true,successMetrics:["leads","qualified","replies","customers","revenueChf"]};
+    return new GrowthAgent().prepare(plan);
+  }
+
   measure(){
     const state=this.memory.snapshot();
     return {
@@ -159,6 +165,7 @@ export function createCeoTools(memory:Memory){
     tool({name:"build_product",description:"Build a product only for an explicitly approved decision. Budget and execution-lock controls remain enforced by the coding agent.",parameters:z.object({decisionId:z.string()}),execute:async({decisionId})=>service.buildProduct(decisionId)}),
     tool({name:"run_tests",description:"Read validation results for an existing product execution.",parameters:z.object({decisionId:z.string()}),execute:async({decisionId})=>service.runTests(decisionId)}),
     tool({name:"publish",description:"Verify guarded GitHub draft publication for a completed approved execution. This tool never merges or deploys production.",parameters:z.object({decisionId:z.string()}),execute:async({decisionId})=>service.publish(decisionId)}),
+    tool({name:"prepare_growth",description:"Prepare an approval-gated growth plan and measurable acquisition funnel. No outreach or spend is executed automatically.",parameters:z.object({opportunityId:z.string(),targetCustomer:z.string(),offer:z.string()}),execute:async({opportunityId,targetCustomer,offer})=>service.prepareGrowth(opportunityId,targetCustomer,offer)}),
     tool({name:"measure",description:"Return current company KPI measurements from persistent state.",parameters:z.object({}),execute:async()=>service.measure()})
   ];
 }
