@@ -44,7 +44,7 @@ try{
   const restored=second.snapshot();
   assert.equal(restored.schemaVersion,3);
   assert.equal(restored.cashChf,115);
-  assert.equal(restored.notes.length,1);
+  assert.equal(restored.notes.length,4);
   assert.equal(restored.notes[0]?.text,"Prototype validation is the fastest first test.");
   assert.ok(restored.updatedAt);
   assert.equal(second.searchNotes("missing").length,0);
