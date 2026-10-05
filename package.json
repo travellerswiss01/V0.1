@@ -24,7 +24,9 @@
     "test:control-room-2": "tsx src/core/control-room-2.test.ts",
     "test:market-intelligence": "tsx src/core/market-intelligence.test.ts",
     "test:live-market-research": "tsx src/core/live-market-research.test.ts",
-    "test:metrics": "tsx src/core/company-metrics.test.ts"
+    "test:metrics": "tsx src/core/company-metrics.test.ts",
+    "test:strategy": "tsx src/core/ceo-strategy.test.ts",
+    "test:loop": "tsx src/core/ceo-loop.test.ts"
   },
   "dependencies": {
     "@openai/agents": "^0.18.0",
