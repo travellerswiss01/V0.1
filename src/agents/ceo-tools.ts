@@ -171,6 +171,7 @@ export function createCeoTools(memory:Memory){
     tool({name:"run_tests",description:"Read validation results for an existing product execution.",parameters:z.object({decisionId:z.string()}),execute:async({decisionId})=>service.runTests(decisionId)}),
     tool({name:"publish",description:"Verify guarded GitHub draft publication for a completed approved execution. This tool never merges or deploys production.",parameters:z.object({decisionId:z.string()}),execute:async({decisionId})=>service.publish(decisionId)}),
     tool({name:"prepare_growth",description:"Prepare an approval-gated growth plan and measurable acquisition funnel. No outreach or spend is executed automatically.",parameters:z.object({opportunityId:z.string(),targetCustomer:z.string(),offer:z.string()}),execute:async({opportunityId,targetCustomer,offer})=>service.prepareGrowth(opportunityId,targetCustomer,offer)}),
+    tool({name:"growth_performance",description:"Read persistent growth funnel and revenue events, optionally scoped to one opportunity.",parameters:z.object({opportunityId:z.string().optional()}),execute:async({opportunityId})=>service.growthPerformance(opportunityId)}),
     tool({name:"measure",description:"Return current company KPI measurements from persistent state.",parameters:z.object({}),execute:async()=>service.measure()})
   ];
 }
