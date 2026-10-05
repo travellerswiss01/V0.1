@@ -15,4 +15,6 @@ assert.equal(m.completedExecutions,1);
 assert.equal(m.productsBuilt,1);
 assert.equal(m.codeReviewsApproved,1);
 assert.equal(m.conversionToExecution,1);
+assert.equal(m.revenuePerCompletedExecution,39);
+assert.equal(m.failureRate,0);
 console.log("company-metrics.test.ts: PASS");
