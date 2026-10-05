@@ -8,6 +8,9 @@ export interface OpportunityPerformance {
   failures:number;
   successRate:number;
   averageCostChf:number;
+  revenueChf:number;
+  profitChf:number;
+  roi:number;
 }
 
 export interface CeoStrategy {
@@ -19,22 +22,28 @@ export interface CeoStrategy {
 }
 
 function performanceFor(state:CompanyState):OpportunityPerformance[]{
-  const byOpportunity=new Map<string,{attempts:number;successes:number;failures:number;cost:number}>();
+  const byOpportunity=new Map<string,{attempts:number;successes:number;failures:number;cost:number;revenue:number}>();
   for(const execution of state.executions){
     const opportunityId=state.decisions.find(d=>d.id===execution.decisionId)?.opportunityId;
     if(!opportunityId) continue;
-    const row=byOpportunity.get(opportunityId)??{attempts:0,successes:0,failures:0,cost:0};
+    const row=byOpportunity.get(opportunityId)??{attempts:0,successes:0,failures:0,cost:0,revenue:0};
     row.attempts++;
     if(execution.status==="completed") row.successes++;
     if(execution.status==="failed") row.failures++;
     row.cost+=execution.costChf;
+    row.revenue+=Math.max(0,execution.revenueChf??0);
     byOpportunity.set(opportunityId,row);
   }
-  return [...byOpportunity.entries()].map(([opportunityId,row])=>({
-    opportunityId,attempts:row.attempts,successes:row.successes,failures:row.failures,
-    successRate:row.attempts?row.successes/row.attempts:0,
-    averageCostChf:row.attempts?row.cost/row.attempts:0
-  }));
+  return [...byOpportunity.entries()].map(([opportunityId,row])=>{
+    const profitChf=row.revenue-row.cost;
+    return {
+      opportunityId,attempts:row.attempts,successes:row.successes,failures:row.failures,
+      successRate:row.attempts?row.successes/row.attempts:0,
+      averageCostChf:row.attempts?row.cost/row.attempts:0,
+      revenueChf:row.revenue,profitChf,
+      roi:row.cost===0?0:profitChf/row.cost
+    };
+  });
 }
 
 export function deriveCeoStrategy(state:CompanyState):CeoStrategy {
@@ -78,6 +87,10 @@ export function deriveCeoStrategy(state:CompanyState):CeoStrategy {
         if(history.averageCostChf>opportunity.estimatedCostChf){
           score-=Math.min(15,(history.averageCostChf-opportunity.estimatedCostChf)*2);
         }
+        if(history.profitChf>0) score+=Math.min(30,history.profitChf/5);
+        else if(history.revenueChf===0 && history.attempts>0) score-=10;
+        if(history.roi>0) score+=Math.min(20,history.roi*5);
+        else if(history.roi<0) score-=Math.min(20,Math.abs(history.roi)*5);
       }
 
       if(priority==="learn") score-=opportunity.estimatedCostChf*.5;
