@@ -21,7 +21,8 @@
     "test:code-agent-2": "tsx src/core/code-agent-2.test.ts",
     "test:code-review": "tsx src/core/code-review.test.ts",
     "test:automatic-fix-loop": "tsx src/core/automatic-fix-loop.test.ts",
-    "test:control-room-2": "tsx src/core/control-room-2.test.ts"
+    "test:control-room-2": "tsx src/core/control-room-2.test.ts",
+    "test:market-intelligence": "tsx src/core/market-intelligence.test.ts"
   },
   "dependencies": {
     "@openai/agents": "^0.18.0",
