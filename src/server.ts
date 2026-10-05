@@ -16,6 +16,22 @@ const escapeHtml=(value:unknown)=>{
 
 const ledger=()=>memory.getLedger();
 
+const pipeline=()=>{
+  const s=memory.snapshot();
+  const latest=s.executions.at(-1);
+  const latestDecision=s.decisions.at(-1);
+  const review=latest?.artifacts?.review;
+  return {
+    cycle:s.cycle,
+    stage:latest?.status==="completed"?"reviewed":latest?.status==="failed"?"failed":latestDecision?.status==="pending_approval"?"approval":"decision",
+    decision:latestDecision?.status??"none",
+    execution:latest?.status??"none",
+    review:review?.approved===true?"approved":review?"rejected":"none",
+    reviewScore:review?.score??null,
+    repairCount:latest?.output?.match(/repair round/gi)?.length??0
+  };
+};
+
 const html=()=>{
   const s=memory.snapshot();
   const entries=ledger();
@@ -40,6 +56,9 @@ small{color:#737d8c}.mono{font-family:ui-monospace,SFMono-Regular,monospace;font
 </style></head><body>
 <h1>CONTROL PANEL</h1><p>Autonomous Company V0.1 · Decision Ledger · Coding agent: <b>${escapeHtml(process.env.AI_CODING_AGENT_ENABLED==="true"?"AI":"deterministic")}</b></p>
 <div class="grid">${cards.map(([l,v])=>`<div class="card"><div class="label">${l}</div><div class="value">${escapeHtml(v)}</div></div>`).join("")}</div>
+<div class="panel"><h2>Autonomy Pipeline</h2><div class="grid" style="grid-template-columns:repeat(4,1fr);margin:12px 0 0">
+${[["DECISION",pipeline().decision],["EXECUTION",pipeline().execution],["CODE REVIEW",pipeline().review],["REVIEW SCORE",pipeline().reviewScore===null?"—":String(pipeline().reviewScore)]].map(([l,v])=>`<div class="card"><div class="label">${l}</div><div class="value">${escapeHtml(v)}</div></div>`).join("")}
+</div><p><small>Current stage: ${escapeHtml(pipeline().stage)} · Cycle ${pipeline().cycle}</small></p></div>
 <div class="actions">
 <form method="post" action="/cycle"><button>▶ Run CEO Cycle</button></form>
 <form method="get" action="/api/state"><button>View State JSON</button></form>${process.env.CONTROL_PANEL_TEST_MODE==="true"?'<form method="post" action="/api/test-risk"><button class="warn">Create Risk-Gate Test</button></form>':""}
@@ -66,7 +85,7 @@ createServer(async(req,res)=>{
   if(req.method==="GET"&&req.url==="/api/state"){
     res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(memory.snapshot())); return;
   }
-  if(req.method==="GET"&&req.url==="/api/ledger"){
+  if(req.method==="GET"&&req.url==="/api/pipeline"){\n    res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(pipeline())); return;\n  }\n  if(req.method==="GET"&&req.url==="/api/ledger"){
     res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(ledger())); return;
   }
   if(req.method==="POST"&&req.url==="/api/test-risk"){
