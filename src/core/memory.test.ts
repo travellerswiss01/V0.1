@@ -9,6 +9,7 @@ const path=join(dir,"state.json");
 try{
   const first=new Memory(100,path);
   assert.equal(first.snapshot().schemaVersion,3);
+  assert.equal(first.snapshot().growthEvents.length,0);
   assert.equal(first.snapshot().notes.length,0);
   first.setOpportunities([{
     id:"test-opportunity",title:"Test MVP",customer:"Test customer",priceChf:39,mvpDays:1,
@@ -29,6 +30,14 @@ try{
   assert.match(learning?.text??"","profit CHF 34.00");
   assert.match(learning?.text??"","ROI 680.0%");
   assert.equal(first.snapshot().notes.filter(note=>note.executionId==="execution-1").length,1);
+  first.recordGrowthEvent({id:"growth-1",opportunityId:"test-opportunity",channel:"b2b",type:"lead",timestamp:new Date().toISOString()});
+  first.recordGrowthEvent({id:"growth-2",opportunityId:"test-opportunity",channel:"b2b",type:"customer",timestamp:new Date().toISOString()});
+  first.recordGrowthEvent({id:"growth-3",opportunityId:"test-opportunity",channel:"b2b",type:"revenue",valueChf:20,timestamp:new Date().toISOString(),externalEventId:"invoice-1"});
+  first.recordGrowthEvent({id:"growth-3-duplicate",opportunityId:"test-opportunity",channel:"b2b",type:"revenue",valueChf:20,timestamp:new Date().toISOString(),externalEventId:"invoice-1"});
+  assert.equal(first.snapshot().growthEvents.length,3);
+  assert.equal(first.snapshot().revenueChf,59);
+  assert.equal(first.snapshot().cashChf,115);
+  assert.deepEqual(first.growthPerformance("test-opportunity"),{leads:1,contacts:0,replies:0,qualified:0,offers:0,customers:1,revenueChf:20});
   const note=first.addNote("learning","Prototype validation is the fastest first test.","system");
   assert.equal(first.searchNotes("validation")[0]?.id,note.id);
   const second=new Memory(999,path);
