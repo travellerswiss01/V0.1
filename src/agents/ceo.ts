@@ -1,6 +1,6 @@
 import {randomUUID} from "node:crypto";
 import {classifyRisk,requiresApproval} from "../core/policy.js";
-import type {Decision,Opportunity} from "../core/types.js";
+import type {Decision} from "../core/types.js";
 import {research} from "./research.js";
 import {Memory} from "../core/memory.js";
 import {executeCodeAgent} from "./code-agent.js";
@@ -34,10 +34,14 @@ export async function runCeoCycle(memory:Memory):Promise<Decision> {
   const affordable=budget<=state.cashChf;
   const approved=affordable&&!requiresApproval(risk);
   const status=!affordable?"rejected":approved?"approved":"pending_approval";
+  const history=strategy.performance.find(p=>p.opportunityId===top.id);
+  const historySummary=history
+    ? ` History: ${history.attempts} attempt(s), ${Math.round(history.successRate*100)}% success, average cost CHF ${history.averageCostChf.toFixed(2)}.`
+    : " History: no prior execution.";
 
   const decision:Decision={
     id:randomUUID(),cycle:state.cycle,action,
-    reason:`${strategy.rationale} Selected from ${candidates.length} candidates after market intelligence. Decision score ${Math.round(ranked[0].decisionScore)}; demand ${topMarket.demandScore}, competition ${topMarket.competitionScore}, willingness-to-pay ${topMarket.willingnessToPayScore}. ${top.rationale}`,
+    reason:`${strategy.rationale} Selected from ${candidates.length} candidates after market intelligence. Decision score ${Math.round(ranked[0].decisionScore)}; demand ${topMarket.demandScore}, competition ${topMarket.competitionScore}, willingness-to-pay ${topMarket.willingnessToPayScore}.${historySummary} ${top.rationale}`,
     expectedOutcome:`Validate demand for CHF ${top.priceChf} offer within ${top.mvpDays} day(s), with a maximum test budget of CHF ${budget}.`,
     confidence:Math.min(.97,.55+Math.max(0,top.score)/300),
     risk,approved,createdAt:new Date().toISOString(),
