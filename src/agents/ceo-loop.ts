@@ -5,6 +5,7 @@ import {runCeoCycle} from "./ceo.js";
 import type {Decision} from "../core/types.js";
 import {researchMarket,rankMarketResearch} from "./market-intelligence.js";
 import {research} from "./research.js";
+import {deriveCeoStrategy} from "../core/ceo-strategy.js";
 
 export interface CeoLoopResult {
   mode:"ai"|"deterministic";
@@ -44,9 +45,9 @@ export async function runCeoDecisionLoop(memory:Memory):Promise<CeoLoopResult>{
     instructions:[
       "You are the operating CEO of a small autonomous company.",
       "Run a complete decision loop using the provided tools.",
-      "First inspect company state and persistent memory.",
+      "First inspect company state, persistent memory and current business metrics.",
       "Then research the market and analyze opportunities.",
-      "Choose exactly one opportunity based on expected learning, affordability, speed and margin.",
+      "Choose exactly one opportunity based on expected learning, affordability, speed, margin and the historical business metrics. Prefer learning when failure rate is high; preserve cash when cash is exhausted.",
       "Create a decision for the selected opportunity.",
       "If the decision is pending approval, request approval and stop; never approve it yourself.",
       "If the decision is approved, first create the structured product specification, then build the product and inspect its test result.",
@@ -65,6 +66,7 @@ export async function runCeoDecisionLoop(memory:Memory):Promise<CeoLoopResult>{
     {maxTurns:16});
 
   const state=memory.snapshot();
+  const strategy=deriveCeoStrategy(state);
   const decision=state.decisions.at(-1);
   if(!decision) throw new Error("AI CEO loop finished without creating a decision.");
 
@@ -75,7 +77,7 @@ export async function runCeoDecisionLoop(memory:Memory):Promise<CeoLoopResult>{
   return {
     mode:"ai",
     decision,
-    summary:result.finalOutput??"AI CEO completed the loop without a final summary.",
+    summary:`${result.finalOutput??"AI CEO completed the loop without a final summary."} Strategy: ${strategy.priority}. ${strategy.rationale}`,
     critic:"passed"
   };
 }
