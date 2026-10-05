@@ -25,7 +25,7 @@ try{
 
   const gateBlocked=await service.buildProduct(decision.id);
   assert.equal(gateBlocked.status,"blocked");
-  assert.match(gateBlocked.reason,"Product specification gate failed");
+  assert.ok("reason" in gateBlocked); assert.match(gateBlocked.reason,/Product specification gate failed/);
 
   const spec=service.createProductSpec(decision.id);
   assert.ok(memory.snapshot().specifications.some(item=>item.decisionId===decision.id));
@@ -34,8 +34,8 @@ try{
 
   const built=await service.buildProduct(decision.id);
   assert.equal(built.status,"completed");
-  assert.equal(built.artifacts?.checks?.build,true);
-  assert.equal(built.artifacts?.checks?.prototype,true);
+  assert.ok("artifacts" in built); assert.equal(built.artifacts?.checks?.build,true);
+  assert.ok("artifacts" in built); assert.equal(built.artifacts?.checks?.prototype,true);
 
   const tests=service.runTests(decision.id);
   assert.equal(tests.status,"completed");
