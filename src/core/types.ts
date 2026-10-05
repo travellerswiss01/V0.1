@@ -49,5 +49,5 @@ export interface CompanyState {
   schemaVersion:number; updatedAt:string;
   cashChf:number; revenueChf:number; costsChf:number; cycle:number;
   opportunities:Opportunity[]; decisions:Decision[]; executions:ExecutionResult[];
-  pendingApprovals:string[]; ledger:LedgerEntry[]; notes:MemoryNote[]; specifications:ProductSpecification[];
+  pendingApprovals:string[]; ledger:LedgerEntry[]; notes:MemoryNote[]; specifications:ProductSpecification[]; growthEvents:GrowthEvent[];
 }
