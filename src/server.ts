@@ -7,6 +7,7 @@ import {executeCodeAgent} from "./agents/code-agent.js";
 import {askCeo} from "./agents/ai-ceo.js";
 import {runCeoDecisionLoop} from "./agents/ceo-loop.js";
 import {activity,products,repairs} from "./core/control-room-data.js";
+import {companyMetrics} from "./core/company-metrics.js";
 
 const port=Number(process.env.PORT||3000);
 const memory=new Memory(Number(process.env.STARTING_CAPITAL_CHF||100),process.env.COMPANY_STATE_PATH||"data/company-state.json");
