@@ -32,7 +32,7 @@ export function createProductSpecification(memory:Memory,decision:Decision):Prod
     ],
     outOfScope:["Payments","Mass outreach","Production deployment","Complex integrations","Advanced analytics"]
   };
-  return spec;
+  return memory.saveProductSpecification(spec);
 }
 
 export function specificationToPrompt(spec:ProductSpecification):string{
