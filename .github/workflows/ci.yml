@@ -30,3 +30,4 @@ jobs:
       - run: npm run test:code-review
       - run: npm run test:automatic-fix-loop
       - run: npm run test:control-room-2
+      - run: npm run test:market-intelligence
