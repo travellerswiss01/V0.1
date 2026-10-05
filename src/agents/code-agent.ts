@@ -56,8 +56,7 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "",
     "## Acceptance criteria",
     ...task.acceptanceCriteria.map(x=>`- ${x}`)
-  ].join("
-")+ "
+  ].join("\n")+ "
 ");
 
   writeFileSync(architecture,[
@@ -65,8 +64,7 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "## Objective",task.objective,"",
     "## Components","- Customer input layer","- Core product logic","- Result/output layer","- Health check and validation","",
     "## Constraints","- MVP only","- No payments","- No production deployment","- No destructive operations"
-  ].join("
-")+"
+  ].join("\n")+"
 ");
 
   writeFileSync(product,[
@@ -77,8 +75,7 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "};",
     "",
     "export function healthCheck():boolean { return Boolean(product.name && product.opportunityId); }"
-  ].join("
-")+ "
+  ].join("\n")+ "
 ");
 
   writeFileSync(test,[
@@ -87,8 +84,7 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "",
     'assert.equal(healthCheck(),true);',
     'console.log("Prototype health check passed.");'
-  ].join("
-")+ "
+  ].join("\n")+ "
 ");
 
   return {workspace,readme,product,test,architecture};
@@ -214,8 +210,7 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
       "Use a bounded repair loop: after a validation failure, diagnose the concrete error, make a focused fix, and validate again. Never perform more than 5 repair validations.",
       "If validation fails, inspect the error, fix the code, and validate again.",
       "Do not claim success unless validate_prototype reports ok:true."
-    ].join("
-"),
+    ].join("\n"),
     tools:[readTool,writeTool,listTool,validateTool]
   });
 
@@ -227,8 +222,7 @@ export async function runAiCodeAgent(task:BuildTask):Promise<CodeAgentResult> {
     ...task.acceptanceCriteria.map(x=>`- ${x}`),
     `Workspace: ${workspace}`,
     "Repair budget: maximum 5 validation/fix iterations."
-  ].join("
-"),{maxTurns:16});
+  ].join("\n"),{maxTurns:16});
 
   let checks:{build:boolean;test:boolean;prototype:boolean};
   let review:CodeAgentResult["review"];
