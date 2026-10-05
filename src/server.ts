@@ -6,6 +6,7 @@ import {executeDecision} from "./agents/executor.js";
 import {executeCodeAgent} from "./agents/code-agent.js";
 import {askCeo} from "./agents/ai-ceo.js";
 import {runCeoDecisionLoop} from "./agents/ceo-loop.js";
+import {activity,products,repairs} from "./core/control-room-data.js";
 
 const port=Number(process.env.PORT||3000);
 const memory=new Memory(Number(process.env.STARTING_CAPITAL_CHF||100),process.env.COMPANY_STATE_PATH||"data/company-state.json");
@@ -15,6 +16,9 @@ const escapeHtml=(value:unknown)=>{
 };
 
 const ledger=()=>memory.getLedger();
+const activityFeed=()=>activity(memory.snapshot());
+const productView=()=>products(memory.snapshot());
+const repairHistory=()=>repairs(memory.snapshot());
 
 const pipeline=()=>{
   const s=memory.snapshot();
@@ -66,7 +70,7 @@ ${[["DECISION",pipeline().decision],["EXECUTION",pipeline().execution],["CODE RE
 <div class="panel"><h2>Pending Approvals</h2>
 ${pending.length?pending.map(d=>`<div class="card" style="margin:10px 0"><b>${escapeHtml(d.action)}</b><p>${escapeHtml(d.reason)}</p><small>Risk: ${escapeHtml(d.risk)} · Budget: CHF ${d.budgetChf.toFixed(2)} · Confidence: ${Math.round(d.confidence*100)}%</small>
 <form method="post" action="/approve" style="margin-top:12px"><input type="hidden" name="decisionId" value="${escapeHtml(d.id)}"><button class="warn">Approve & Execute</button></form></div>`).join(""):"<p>No human approvals required.</p>"}</div>
-<div class="panel" style="margin-top:18px"><h2>Decision Ledger</h2>
+<div class="panel" style="margin-top:18px"><h2>Live Activity</h2><div class="mono">${escapeHtml(JSON.stringify(activityFeed().slice(0,10),null,2))}</div></div><div class="panel" style="margin-top:18px"><h2>Products & Opportunities</h2><div class="mono">${escapeHtml(JSON.stringify(productView(),null,2))}</div></div><div class="panel" style="margin-top:18px"><h2>Repair History</h2><div class="mono">${escapeHtml(JSON.stringify(repairHistory(),null,2))}</div></div><div class="panel" style="margin-top:18px"><h2>Decision Ledger</h2>
 <table><thead><tr><th>TIME</th><th>TYPE</th><th>STATUS</th><th>ACTION</th><th>DETAIL</th></tr></thead><tbody>
 ${entries.slice(0,50).map(e=>`<tr><td><small>${escapeHtml(e.timestamp)}</small></td><td>${escapeHtml(e.type)}</td><td><span class="pill ${escapeHtml(e.status)}">${escapeHtml(e.status)}</span></td><td><b>${escapeHtml(e.action)}</b></td><td>${escapeHtml(e.detail)}</td></tr>`).join("")}
 </tbody></table></div>
@@ -88,6 +92,9 @@ createServer(async(req,res)=>{
   if(req.method==="GET"&&req.url==="/api/pipeline"){
     res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(pipeline())); return;
   }
+  if(req.method==="GET"&&req.url==="/api/activity"){res.writeHead(200,{"content-type":"application/json"});res.end(JSON.stringify(activityFeed()));return;}
+  if(req.method==="GET"&&req.url==="/api/products"){res.writeHead(200,{"content-type":"application/json"});res.end(JSON.stringify(productView()));return;}
+  if(req.method==="GET"&&req.url==="/api/repairs"){res.writeHead(200,{"content-type":"application/json"});res.end(JSON.stringify(repairHistory()));return;}
   if(req.method==="GET"&&req.url==="/api/ledger"){
     res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(ledger())); return;
   }
