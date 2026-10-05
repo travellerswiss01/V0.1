@@ -1,0 +1,54 @@
+import type {CompanyState,Opportunity} from "./types.js";
+import {companyMetrics,type CompanyMetrics} from "./company-metrics.js";
+
+export interface CeoStrategy {
+  metrics:CompanyMetrics;
+  priority:"build"|"validate"|"learn"|"preserve_cash";
+  rationale:string;
+  scoreOpportunity:(opportunity:Opportunity)=>number;
+}
+
+export function deriveCeoStrategy(state:CompanyState):CeoStrategy {
+  const metrics=companyMetrics(state);
+  const repeatedFailures=new Set(
+    state.executions.filter(e=>e.status==="failed").map(e=>{
+      return state.decisions.find(d=>d.id===e.decisionId)?.opportunityId;
+    }).filter((id):id is string=>Boolean(id))
+  );
+  const repeatedSuccesses=new Set(
+    state.executions.filter(e=>e.status==="completed").map(e=>{
+      return state.decisions.find(d=>d.id===e.decisionId)?.opportunityId;
+    }).filter((id):id is string=>Boolean(id))
+  );
+
+  let priority:CeoStrategy["priority"]="validate";
+  if(metrics.cashChf<=0) priority="preserve_cash";
+  else if(metrics.completedExecutions===0) priority="validate";
+  else if(metrics.failureRate>=0.5) priority="learn";
+  else if(metrics.revenuePerCompletedExecution<=0) priority="validate";
+  else priority="build";
+
+  const rationale=priority==="preserve_cash"
+    ?"Cash is exhausted; do not approve new spend."
+    :priority==="learn"
+      ?"Execution failure rate is at least 50%; favour cheap, reversible learning before increasing scope."
+      :priority==="build"
+        ?"The execution loop has produced successful results; favour opportunities with stronger economics and proven execution patterns."
+        ?"No completed execution has established a winning pattern yet; prioritise fast, affordable validation.";
+
+  return {
+    metrics,priority,rationale,
+    scoreOpportunity:(opportunity)=>{
+      let score=opportunity.score;
+      if(opportunity.estimatedCostChf>metrics.cashChf) score-=100;
+      if(opportunity.mvpDays<=1) score+=15;
+      else if(opportunity.mvpDays<=3) score+=10;
+      if(opportunity.priceChf>opportunity.estimatedCostChf*2) score+=10;
+      if(repeatedFailures.has(opportunity.id)) score-=25;
+      if(repeatedSuccesses.has(opportunity.id)) score+=10;
+      if(priority==="learn") score-=opportunity.estimatedCostChf*.5;
+      if(priority==="preserve_cash") score-=opportunity.estimatedCostChf*10;
+      return score;
+    }
+  };
+}
