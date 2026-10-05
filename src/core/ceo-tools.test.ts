@@ -23,7 +23,7 @@ try{
   const blocked=await service.buildProduct("missing-decision");
   assert.equal(blocked.status,"blocked");
 
-  const spec=service.createProductSpec(decision.id);
+  const spec=service.createProductSpec(decision.id);\n  assert.ok(memory.snapshot().specifications.some(item=>item.decisionId===decision.id));
   assert.equal(spec.pricingChf,opportunities[0].priceChf);
   assert.ok(spec.acceptanceCriteria.length>=4);
 
