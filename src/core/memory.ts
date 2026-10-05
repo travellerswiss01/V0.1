@@ -1,7 +1,7 @@
 import { readFileSync,writeFileSync,existsSync,mkdirSync,renameSync } from "node:fs";
 import {dirname} from "node:path";
 import {randomUUID} from "node:crypto";
-import type {CompanyState,Decision,ExecutionResult,Opportunity,LedgerEntry,MemoryNote} from "./types.js";
+import type {CompanyState,Decision,ExecutionResult,Opportunity,LedgerEntry,MemoryNote,GrowthEvent} from "./types.js";
 import {BudgetPolicy} from "./budget.js";
 
 const SCHEMA_VERSION=3;
@@ -25,14 +25,14 @@ export class Memory{
   private emptyState(startingCapital:number):CompanyState{
     return {schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),cashChf:startingCapital,
       revenueChf:0,costsChf:0,cycle:0,opportunities:[],decisions:[],executions:[],
-      pendingApprovals:[],ledger:[],notes:[],specifications:[]};
+      pendingApprovals:[],ledger:[],notes:[],specifications:[],growthEvents:[]};
   }
 
   private migrate(input:Partial<CompanyState>,startingCapital:number):CompanyState{
     const base=this.emptyState(startingCapital);
     const migrated:CompanyState={...base,...input,schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString()};
     migrated.opportunities ??=[]; migrated.decisions ??=[]; migrated.executions ??=[];
-    migrated.pendingApprovals ??=[]; migrated.ledger ??=[]; migrated.notes ??=[]; migrated.specifications ??=[];
+    migrated.pendingApprovals ??=[]; migrated.ledger ??=[]; migrated.notes ??=[]; migrated.specifications ??=[]; migrated.growthEvents ??=[];
     return migrated;
   }
 
@@ -81,6 +81,20 @@ export class Memory{
     const decision=this.state.decisions.find(d=>d.id===result.decisionId);
     this.appendLedger({type:"execution_recorded",decisionId:result.decisionId,status:result.status,action:result.action,budgetChf:result.costChf,risk:decision?.risk??"low",detail:result.output});
     this.save(); return structuredClone(result);
+  }
+
+  recordGrowthEvent(event:GrowthEvent):GrowthEvent{
+    if(event.valueChf!==undefined && event.valueChf<0) throw new Error("Growth event revenue value cannot be negative.");
+    if(this.state.growthEvents.some(item=>item.id===event.id || (event.externalEventId && item.externalEventId===event.externalEventId))) return structuredClone(this.state.growthEvents.find(item=>item.id===event.id || item.externalEventId===event.externalEventId)!);
+    this.state.growthEvents.unshift(structuredClone(event));
+    if(event.type==="revenue"){ const value=event.valueChf??0; this.state.revenueChf+=value; this.state.cashChf+=value; }
+    this.addNote("learning",`Growth event ${event.type} on ${event.channel}: opportunity ${event.opportunityId}${event.type==="revenue"?`, revenue CHF ${ (event.valueChf??0).toFixed(2)}`:""}.`,`system`,"system");
+    this.save(); return structuredClone(event);
+  }
+  growthPerformance(opportunityId?:string){
+    const events=this.state.growthEvents.filter(item=>!opportunityId||item.opportunityId===opportunityId);
+    const count=(type:GrowthEvent["type"])=>events.filter(item=>item.type===type).length;
+    return {leads:count("lead"),contacts:count("contact"),replies:count("reply"),qualified:count("qualified"),offers:count("offer"),customers:count("customer"),revenueChf:events.reduce((sum,item)=>sum+(item.type==="revenue"?item.valueChf??0:0),0)};
   }
 
   addNote(category:MemoryNote["category"],text:string,source:MemoryNote["source"]="system"):MemoryNote{
