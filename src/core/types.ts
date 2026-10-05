@@ -30,7 +30,9 @@ export interface ExecutionResult {
   output:string; error?:string; attempt?:number; maxAttempts?:number;
   failureCode?:FailureCode; retryable?:boolean;
   artifacts?:{workspace?:string;files?:string[];checks?:{build:boolean;test:boolean;prototype:boolean};
-    mode?:"ai"|"deterministic";github?:{branch:string;commitSha:string;prNumber:number;prUrl:string}};
+    mode?:"ai"|"deterministic";
+    review?:CodeReviewArtifact;
+    github?:{branch:string;commitSha:string;prNumber:number;prUrl:string}};
 }
 export interface LedgerEntry {
   id:string; timestamp:string;
