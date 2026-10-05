@@ -77,10 +77,10 @@ export class Memory{
       this.state.revenueChf+=Math.max(0,result.revenueChf??0);
     }
     this.state.executions.unshift(structuredClone(result));
-    this.recordExecutionLearning(result,decision);
     this.state.pendingApprovals=this.state.pendingApprovals.filter(id=>id!==result.decisionId);
     const decision=this.state.decisions.find(d=>d.id===result.decisionId);
     this.appendLedger({type:"execution_recorded",decisionId:result.decisionId,status:result.status,action:result.action,budgetChf:result.costChf,risk:decision?.risk??"low",detail:result.output});
+    this.recordExecutionLearning(result,decision);
     this.save(); return structuredClone(result);
   }
 
