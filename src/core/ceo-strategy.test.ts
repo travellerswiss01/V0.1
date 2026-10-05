@@ -13,6 +13,7 @@ const base:CompanyState={
 const strategy=deriveCeoStrategy(base);
 assert.equal(strategy.priority,"validate");
 assert.ok(strategy.scoreOpportunity(base.opportunities[0])>70);
+assert.ok(strategy.scoreOpportunity(base.opportunities[1])>60);
 
 const failed={...base,executions:[{id:"e1",decisionId:"d1",status:"failed",action:"x",startedAt:"",completedAt:"",costChf:5,output:""}],decisions:[{id:"d1",cycle:1,action:"x",reason:"",expectedOutcome:"",confidence:.8,risk:"low",approved:true,createdAt:"",opportunityId:"cheap",opportunityScore:70,alternatives:[],budgetChf:10,status:"approved"}]};
 const riskStrategy=deriveCeoStrategy(failed);
@@ -36,4 +37,23 @@ const expensiveHistory={...successful,
 const costAware=deriveCeoStrategy(expensiveHistory);
 assert.ok(costAware.scoreOpportunity(base.opportunities[0])<learnedStrategy.scoreOpportunity(base.opportunities[0]));
 
-console.log(JSON.stringify({status:"passed",initialPriority:strategy.priority,failurePriority:riskStrategy.priority,learnedSuccessRate:learnedStrategy.performance[0].successRate,costAware:true}));
+const repeatedlyTried={...base,
+  executions:[
+    {id:"e4",decisionId:"d3",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:8,output:""},
+    {id:"e5",decisionId:"d4",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:8,output:""},
+    {id:"e6",decisionId:"d5",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:8,output:""}
+  ],
+  decisions:[
+    {id:"d3",cycle:1,action:"x",reason:"",expectedOutcome:"",confidence:.9,risk:"low",approved:true,createdAt:"",opportunityId:"cheap",opportunityScore:70,alternatives:[],budgetChf:10,status:"approved"},
+    {id:"d4",cycle:2,action:"x",reason:"",expectedOutcome:"",confidence:.9,risk:"low",approved:true,createdAt:"",opportunityId:"cheap",opportunityScore:70,alternatives:[],budgetChf:10,status:"approved"},
+    {id:"d5",cycle:3,action:"x",reason:"",expectedOutcome:"",confidence:.9,risk:"low",approved:true,createdAt:"",opportunityId:"cheap",opportunityScore:70,alternatives:[],budgetChf:10,status:"approved"}
+  ]
+};
+const explorationStrategy=deriveCeoStrategy(repeatedlyTried);
+assert.ok(
+  explorationStrategy.scoreOpportunity(base.opportunities[1]) >
+  explorationStrategy.scoreOpportunity(base.opportunities[0]),
+  "A new opportunity should beat an repeatedly-tested opportunity when their base scores are close."
+);
+
+console.log(JSON.stringify({status:"passed",initialPriority:strategy.priority,failurePriority:riskStrategy.priority,learnedSuccessRate:learnedStrategy.performance[0].successRate,costAware:true,explorationBias:true}));
