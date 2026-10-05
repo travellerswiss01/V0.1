@@ -63,7 +63,9 @@ export class Memory{
     if(result.status==="completed"){
       const authorization=this.budgetPolicy.authorize(this.state,result.decisionId,result.costChf);
       if(!authorization.authorized) throw new Error(`Budget authorization denied: ${authorization.reason}`);
-      this.state.cashChf-=result.costChf; this.state.costsChf+=result.costChf;
+      this.state.cashChf-=result.costChf;
+      this.state.costsChf+=result.costChf;
+      this.state.revenueChf+=Math.max(0,result.revenueChf??0);
     }
     this.state.executions.unshift(structuredClone(result));
     this.state.pendingApprovals=this.state.pendingApprovals.filter(id=>id!==result.decisionId);
