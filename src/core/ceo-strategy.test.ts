@@ -3,7 +3,7 @@ import {deriveCeoStrategy} from "./ceo-strategy.js";
 import type {CompanyState} from "./types.js";
 
 const base:CompanyState={
-  schemaVersion:2,updatedAt:new Date().toISOString(),cashChf:100,revenueChf:0,costsChf:0,cycle:2,
+  schemaVersion:3,updatedAt:new Date().toISOString(),cashChf:100,revenueChf:0,costsChf:0,cycle:2,
   opportunities:[
     {id:"cheap",title:"Cheap",customer:"x",priceChf:50,mvpDays:1,estimatedCostChf:10,competition:"low",automation:80,score:70,rationale:"fast"},
     {id:"new",title:"New",customer:"x",priceChf:40,mvpDays:2,estimatedCostChf:10,competition:"low",automation:70,score:60,rationale:"new"}
@@ -33,6 +33,17 @@ assert.equal(learnedStrategy.performance[0].revenueChf,39);
 assert.equal(learnedStrategy.performance[0].profitChf,31);
 assert.equal(learnedStrategy.performance[0].roi,39/8-1);
 assert.ok(learnedStrategy.scoreOpportunity(base.opportunities[0])>strategy.scoreOpportunity(base.opportunities[0]));
+
+
+const growthRevenue={...base,
+  schemaVersion:3,
+  growthEvents:[{id:"g1",opportunityId:"cheap",channel:"b2b",type:"revenue",valueChf:120,timestamp:"2026-10-05T12:00:00.000Z",externalEventId:"verified-sale-1"}]
+};
+const growthStrategy=deriveCeoStrategy(growthRevenue);
+assert.equal(growthStrategy.performance[0].revenueChf,120);
+assert.equal(growthStrategy.performance[0].profitChf,120);
+assert.equal(growthStrategy.performance[0].roi,0);
+assert.ok(growthStrategy.scoreOpportunity(base.opportunities[0])>strategy.scoreOpportunity(base.opportunities[0]));
 
 const expensiveHistory={...successful,
   executions:[{id:"e3",decisionId:"d2",status:"completed",action:"x",startedAt:"",completedAt:"",costChf:20,revenueChf:0,output:""}],
