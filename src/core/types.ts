@@ -27,6 +27,7 @@ export interface CodeReviewArtifact {
 export interface ExecutionResult {
   id:string; decisionId:string; status:"completed"|"blocked"|"failed";
   action:string; startedAt:string; completedAt:string; costChf:number;
+  revenueChf?:number;
   output:string; error?:string; attempt?:number; maxAttempts?:number;
   failureCode?:FailureCode; retryable?:boolean;
   artifacts?:{workspace?:string;files?:string[];checks?:{build:boolean;test:boolean;prototype:boolean};
