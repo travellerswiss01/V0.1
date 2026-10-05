@@ -1,7 +1,8 @@
 import {randomUUID} from "node:crypto";
 import {tool} from "@openai/agents";
 import {z} from "zod";
-import type {Decision, Opportunity, GrowthEventType, SalesChannel} from "../core/types.js";
+import type {Decision, Opportunity, GrowthEventType} from "../core/types.js";
+import type {SalesChannel} from "../sales/channel-manager.js";
 import {Memory} from "../core/memory.js";
 import {research} from "./research.js";
 import {executeCodeAgent} from "./code-agent.js";
