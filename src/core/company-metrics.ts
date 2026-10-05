@@ -4,6 +4,8 @@ export interface CompanyMetrics {
   cashChf:number;
   revenueChf:number;
   costsChf:number;
+  profitChf:number;
+  roi:number;
   cycle:number;
   opportunities:number;
   decisions:number;
@@ -25,10 +27,13 @@ export function companyMetrics(state:CompanyState):CompanyMetrics {
   const failedExecutions=executions.filter(e=>e.status==="failed").length;
   const approvedDecisions=state.decisions.filter(d=>d.status==="approved"||d.approved).length;
   const codeReviewsApproved=executions.filter(e=>e.artifacts?.review?.approved===true).length;
+  const profitChf=state.revenueChf-state.costsChf;
   return {
     cashChf:state.cashChf,
     revenueChf:state.revenueChf,
     costsChf:state.costsChf,
+    profitChf,
+    roi:state.costsChf===0?0:profitChf/state.costsChf,
     cycle:state.cycle,
     opportunities:state.opportunities.length,
     decisions:state.decisions.length,
