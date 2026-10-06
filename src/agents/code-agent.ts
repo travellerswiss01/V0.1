@@ -108,7 +108,7 @@ function validatePrototype(workspace:string):{build:boolean;test:boolean;prototy
   // Validate the company repository, but never run the repository smoke test here.
   // The smoke test starts its own Control Panel server; running it from inside
   // the Control Panel approval test creates a recursive test-server collision.
-  execFileSync("npm",["run","build"],{stdio:"pipe",timeout:120000});
+  execFileSync("npm",["run","build"],{cwd:resolve("."),stdio:"pipe",timeout:120000});
   build=true;
 
   const tsFiles=listFiles(workspace).filter(file=>file.endsWith(".ts"));
