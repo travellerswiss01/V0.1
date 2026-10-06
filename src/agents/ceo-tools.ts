@@ -115,7 +115,7 @@ export class CeoToolService {
 
   async buildProduct(decisionId:string){
     const decision=this.memory.snapshot().decisions.find(item=>item.id===decisionId);
-    if(!decision) throw new Error("Decision not found.");
+    if(!decision) return {status:"blocked",reason:"Decision not found."};
     if(decision.status!=="approved"||!decision.approved) return {status:"blocked",reason:"Decision is not approved."};
     return await executeCodeAgent(this.memory,decision);
   }
