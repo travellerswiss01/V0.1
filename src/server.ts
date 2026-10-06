@@ -8,6 +8,7 @@ import {askCeo} from "./agents/ai-ceo.js";
 import {runCeoDecisionLoop} from "./agents/ceo-loop.js";
 import {activity,products,repairs} from "./core/control-room-data.js";
 import {companyMetrics} from "./core/company-metrics.js";
+import {createProductSpecification} from "./agents/product-spec.js";
 
 const port=Number(process.env.PORT||3000);
 const memory=new Memory(Number(process.env.STARTING_CAPITAL_CHF||100),process.env.COMPANY_STATE_PATH||"data/company-state.json");
@@ -104,15 +105,22 @@ createServer(async(req,res)=>{
   }
   if(req.method==="POST"&&req.url==="/api/test-risk"){
     if(process.env.CONTROL_PANEL_TEST_MODE!=="true"){res.writeHead(404);res.end("Not found");return;}
+    const opportunityId="control-panel-risk-test";
+    memory.setOpportunities([{
+      id:opportunityId,title:"Control Panel risk-gate prototype",customer:"Test customer",priceChf:5,mvpDays:1,
+      estimatedCostChf:5,competition:"low",automation:90,score:0,rationale:"Synthetic test fixture for the human approval flow."
+    }]);
     const decision={
       id:randomUUID(),cycle:memory.snapshot().cycle+1,
       action:"publish prototype to production",reason:"Control Panel risk-gate test",
-      expectedOutcome:"Verify high-risk actions require explicit human approval.",
+      expectedOutcome:"Verify high-risk actions stop before explicit human approval and execute only after approval.",
       confidence:.99,risk:"high" as const,approved:false,createdAt:new Date().toISOString(),
-      opportunityId:"control-panel-risk-test",opportunityScore:0,alternatives:[],
-      budgetChf:5,status:"pending_approval" as const
+      opportunityId,opportunityScore:0,alternatives:[],budgetChf:5,status:"pending_approval" as const
     };
     memory.addDecision(decision);
+    // Keep the test fixture aligned with the production execution contract:
+    // approval may expose the action, but execution still requires a persisted spec.
+    createProductSpecification(memory,decision);
     res.writeHead(200,{"content-type":"application/json"});res.end(JSON.stringify({status:"pending_approval",decisionId:decision.id}));return;
   }
   if(req.method==="POST"&&req.url==="/cycle"){
