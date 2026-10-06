@@ -88,8 +88,8 @@ export function deriveCeoStrategy(state:CompanyState):CeoStrategy {
   let priority:CeoStrategy["priority"]="validate";
   if(metrics.cashChf<=0) priority="preserve_cash";
   else if(performance.some(p=>p.customers>0||p.revenueChf>0)) priority="grow";
-  else if(metrics.completedExecutions===0) priority="validate";
   else if(metrics.failureRate>=0.5) priority="learn";
+  else if(metrics.completedExecutions===0) priority="validate";
   else if(metrics.revenuePerCompletedExecution<=0) priority="validate";
   else priority="build";
 
