@@ -26,7 +26,8 @@
     "test:live-market-research": "tsx src/core/live-market-research.test.ts",
     "test:metrics": "tsx src/core/company-metrics.test.ts",
     "test:strategy": "tsx src/core/ceo-strategy.test.ts",
-    "test:loop": "tsx src/core/ceo-loop.test.ts"
+    "test:loop": "tsx src/core/ceo-loop.test.ts",
+    "test:failure": "tsx src/core/failure.test.ts"
   },
   "dependencies": {
     "@openai/agents": "^0.18.0",
