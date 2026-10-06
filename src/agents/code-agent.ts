@@ -14,6 +14,8 @@ import {automaticFixLoop} from "./automatic-fix-loop.js";
 import {ExecutionLock,withExecutionLock} from "../core/execution-lock.js";
 import type {Memory} from "../core/memory.js";
 
+const repositoryRoot=process.cwd();
+
 export interface CodeAgentResult {
   workspace:string;
   files:string[];
@@ -108,7 +110,7 @@ function validatePrototype(workspace:string):{build:boolean;test:boolean;prototy
   // Validate the company repository, but never run the repository smoke test here.
   // The smoke test starts its own Control Panel server; running it from inside
   // the Control Panel approval test creates a recursive test-server collision.
-  execFileSync("npm",["run","build"],{cwd:resolve("."),stdio:"pipe",timeout:120000});
+  execFileSync("npm",["run","build"],{cwd:repositoryRoot,stdio:"pipe",timeout:120000});
   build=true;
 
   const tsFiles=listFiles(workspace).filter(file=>file.endsWith(".ts"));
