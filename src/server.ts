@@ -2,7 +2,6 @@ import {createServer} from "node:http";
 import {randomUUID} from "node:crypto";
 import {Memory} from "./core/memory.js";
 import {runCeoCycle} from "./agents/ceo.js";
-import {executeDecision} from "./agents/executor.js";
 import {executeCodeAgent} from "./agents/code-agent.js";
 import {askCeo} from "./agents/ai-ceo.js";
 import {runCeoDecisionLoop} from "./agents/ceo-loop.js";
