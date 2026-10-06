@@ -42,7 +42,7 @@ export function researchMarket(opportunity:Opportunity):MarketResearch{
 
 export function rankMarketResearch(items:MarketResearch[]):MarketResearch[]{
   return [...items].sort((a,b)=>{
-    const score=x=>x.marketSizeScore*.2+x.demandScore*.2+x.competitionScore*.2+x.willingnessToPayScore*.15+x.automationScore*.15+x.riskScore*.1;
+    const score=(x:MarketResearch)=>x.marketSizeScore*.2+x.demandScore*.2+x.competitionScore*.2+x.willingnessToPayScore*.15+x.automationScore*.15+x.riskScore*.1;
     return score(b)-score(a);
   });
 }

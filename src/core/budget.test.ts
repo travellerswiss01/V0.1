@@ -11,10 +11,11 @@ const execution=(decisionId:string,costChf:number,status:ExecutionResult["status
   id:decisionId,decisionId,status,action:"prototype",startedAt:new Date().toISOString(),completedAt:new Date().toISOString(),costChf,output:"test"
 });
 
-let view={cashChf:100,decisions:[decision("d1",30),decision("d2",50)],executions:[]};
+let view:{cashChf:number;decisions:Decision[];executions:ExecutionResult[]}={cashChf:100,decisions:[decision("d1",30),decision("d2",50)],executions:[]};
 assert.equal(policy.reserved(view),80);
 assert.equal(policy.available(view,"d1"),20);
-assert.equal(policy.authorize(view,"d1",30).authorized,false);
+assert.equal(policy.authorize(view,"d1",30).authorized,true);
+assert.equal(policy.authorize(view,"d1",51).authorized,false);
 
 view={...view,decisions:[decision("d1",30)],executions:[]};
 assert.equal(policy.available(view,"d1"),70);

@@ -9,16 +9,19 @@ import {createBuildTask} from "./build-task.js";
 import type {BuildTask} from "./build-task.js";
 import {publishWorkspaceToGitHub} from "./github-publisher.js";
 import {reviewCode} from "./code-review.js";
+import type {CodeReviewResult} from "./code-review.js";
 import {automaticFixLoop} from "./automatic-fix-loop.js";
 import {ExecutionLock,withExecutionLock} from "../core/execution-lock.js";
 import type {Memory} from "../core/memory.js";
+
+const repositoryRoot=process.cwd();
 
 export interface CodeAgentResult {
   workspace:string;
   files:string[];
   checks:{build:boolean;test:boolean;prototype:boolean};
   mode:"ai"|"deterministic";
-  review:{approved:boolean;score:number;findings:string[];mode:"ai"|"deterministic";summary:string};
+  review:CodeReviewResult;
   output:string;
   github?:{branch:string;commitSha:string;prNumber:number;prUrl:string};
 }
@@ -56,16 +59,14 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "",
     "## Acceptance criteria",
     ...task.acceptanceCriteria.map(x=>`- ${x}`)
-  ].join("\n")+ "
-");
+  ].join("\n")+ "\n");
 
   writeFileSync(architecture,[
     "# Product Architecture","",
     "## Objective",task.objective,"",
     "## Components","- Customer input layer","- Core product logic","- Result/output layer","- Health check and validation","",
     "## Constraints","- MVP only","- No payments","- No production deployment","- No destructive operations"
-  ].join("\n")+"
-");
+  ].join("\n")+"\n");
 
   writeFileSync(product,[
     "export const product = {",
@@ -75,8 +76,7 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "};",
     "",
     "export function healthCheck():boolean { return Boolean(product.name && product.opportunityId); }"
-  ].join("\n")+ "
-");
+  ].join("\n")+"\n");
 
   writeFileSync(test,[
     'import {strict as assert} from "node:assert";',
@@ -84,8 +84,7 @@ function seedWorkspace(task:BuildTask):{workspace:string;readme:string;product:s
     "",
     'assert.equal(healthCheck(),true);',
     'console.log("Prototype health check passed.");'
-  ].join("\n")+ "
-");
+  ].join("\n")+"\n");
 
   return {workspace,readme,product,test,architecture};
 }
@@ -111,18 +110,20 @@ function validatePrototype(workspace:string):{build:boolean;test:boolean;prototy
   // Validate the company repository, but never run the repository smoke test here.
   // The smoke test starts its own Control Panel server; running it from inside
   // the Control Panel approval test creates a recursive test-server collision.
-  execFileSync("npm",["run","build"],{stdio:"pipe",timeout:120000});
+  execFileSync("npm",["run","build"],{cwd:repositoryRoot,stdio:"pipe",timeout:120000});
   build=true;
 
   const tsFiles=listFiles(workspace).filter(file=>file.endsWith(".ts"));
   if(tsFiles.length===0) throw new Error("Prototype validation failed: no TypeScript source was created.");
 
-  execFileSync("npx",[
-    "tsc","--noEmit","--target","ES2022","--module","NodeNext","--moduleResolution","NodeNext",...tsFiles
-  ],{cwd:workspace,stdio:"pipe",timeout:120000});
+  const tscBin=join(repositoryRoot,"node_modules","typescript","bin","tsc");
+  execFileSync(process.execPath,[
+    tscBin,"--noEmit","--target","ES2022","--module","NodeNext","--moduleResolution","NodeNext",...tsFiles.map(file=>join(workspace,file))
+  ],{cwd:repositoryRoot,stdio:"pipe",timeout:120000});
   prototype=true;
 
-  execFileSync("npx",["tsx","prototype.test.ts"],{cwd:workspace,stdio:"pipe",timeout:120000});
+  const tsxCli=join(repositoryRoot,"node_modules","tsx","dist","cli.mjs");
+  execFileSync(process.execPath,[tsxCli,join(workspace,"prototype.test.ts")],{cwd:repositoryRoot,stdio:"pipe",timeout:120000});
   test=true;
 
   return {build,test,prototype};
@@ -306,7 +307,7 @@ export async function executeCodeAgent(memory:{
           workspace:result.workspace,
           files:result.files,
           checks:result.checks,
-          review:result.review,
+          review:{...result.review,findings:result.review.findings.map(f=>`${f.title}: ${f.detail}`)},
           mode:result.mode,
           github:result.github
         }

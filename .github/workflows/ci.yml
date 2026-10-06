@@ -31,3 +31,9 @@ jobs:
       - run: npm run test:automatic-fix-loop
       - run: npm run test:control-room-2
       - run: npm run test:market-intelligence
+      - run: npm run test:failure
+      - run: npm run test:smoke
+      - run: npm run test:e2e
+      - run: npm run test:metrics
+      - run: npm run test:strategy
+      - run: npm run test:live-market-research

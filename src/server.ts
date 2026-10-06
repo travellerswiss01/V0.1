@@ -7,6 +7,8 @@ import {executeCodeAgent} from "./agents/code-agent.js";
 import {askCeo} from "./agents/ai-ceo.js";
 import {runCeoDecisionLoop} from "./agents/ceo-loop.js";
 import {activity,products,repairs} from "./core/control-room-data.js";
+import {companyMetrics} from "./core/company-metrics.js";
+import {createProductSpecification} from "./agents/product-spec.js";
 
 const port=Number(process.env.PORT||3000);
 const memory=new Memory(Number(process.env.STARTING_CAPITAL_CHF||100),process.env.COMPANY_STATE_PATH||"data/company-state.json");
@@ -19,11 +21,12 @@ const ledger=()=>memory.getLedger();
 const activityFeed=()=>activity(memory.snapshot());
 const productView=()=>products(memory.snapshot());
 const repairHistory=()=>repairs(memory.snapshot());
+const metrics=()=>companyMetrics(memory.snapshot());
 
 const pipeline=()=>{
   const s=memory.snapshot();
-  const latest=s.executions.at(-1);
-  const latestDecision=s.decisions.at(-1);
+  const latest=s.executions[0];
+  const latestDecision=s.decisions[0];
   const review=latest?.artifacts?.review;
   return {
     cycle:s.cycle,
@@ -60,6 +63,7 @@ small{color:#737d8c}.mono{font-family:ui-monospace,SFMono-Regular,monospace;font
 </style></head><body>
 <h1>CONTROL PANEL</h1><p>Autonomous Company V0.1 · Decision Ledger · Coding agent: <b>${escapeHtml(process.env.AI_CODING_AGENT_ENABLED==="true"?"AI":"deterministic")}</b></p>
 <div class="grid">${cards.map(([l,v])=>`<div class="card"><div class="label">${l}</div><div class="value">${escapeHtml(v)}</div></div>`).join("")}</div>
+<div class="panel"><h2>Business Metrics</h2><div class="grid" style="grid-template-columns:repeat(4,1fr);margin:12px 0 0">${[["OPPORTUNITIES",metrics().opportunities],["APPROVED",metrics().approvedDecisions],["BUILT",metrics().productsBuilt],["COMPLETED",metrics().completedExecutions],["REVENUE",`CHF ${metrics().revenueChf.toFixed(2)}`],["PROFIT",`CHF ${metrics().profitChf.toFixed(2)}`],["ROI",`${(metrics().roi*100).toFixed(1)}%`],["FAILURE RATE",`${(metrics().failureRate*100).toFixed(1)}%`]].map(([l,v])=>`<div class="card"><div class="label">${l}</div><div class="value">${escapeHtml(v)}</div></div>`).join("")}</div><p><small>Decision → execution conversion: ${Math.round(metrics().conversionToExecution*100)}% · Revenue / completed execution: CHF ${metrics().revenuePerCompletedExecution.toFixed(2)}.</small></p></div>
 <div class="panel"><h2>Autonomy Pipeline</h2><div class="grid" style="grid-template-columns:repeat(4,1fr);margin:12px 0 0">
 ${[["DECISION",pipeline().decision],["EXECUTION",pipeline().execution],["CODE REVIEW",pipeline().review],["REVIEW SCORE",pipeline().reviewScore===null?"—":String(pipeline().reviewScore)]].map(([l,v])=>`<div class="card"><div class="label">${l}</div><div class="value">${escapeHtml(v)}</div></div>`).join("")}
 </div><p><small>Current stage: ${escapeHtml(pipeline().stage)} · Cycle ${pipeline().cycle}</small></p></div>
@@ -89,6 +93,7 @@ createServer(async(req,res)=>{
   if(req.method==="GET"&&req.url==="/api/state"){
     res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(memory.snapshot())); return;
   }
+  if(req.method==="GET"&&req.url==="/api/metrics"){res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(metrics())); return;}
   if(req.method==="GET"&&req.url==="/api/pipeline"){
     res.writeHead(200,{"content-type":"application/json"}); res.end(JSON.stringify(pipeline())); return;
   }
@@ -100,15 +105,22 @@ createServer(async(req,res)=>{
   }
   if(req.method==="POST"&&req.url==="/api/test-risk"){
     if(process.env.CONTROL_PANEL_TEST_MODE!=="true"){res.writeHead(404);res.end("Not found");return;}
+    const opportunityId="control-panel-risk-test";
+    memory.setOpportunities([{
+      id:opportunityId,title:"Control Panel risk-gate prototype",customer:"Test customer",priceChf:5,mvpDays:1,
+      estimatedCostChf:5,competition:"low",automation:90,score:0,rationale:"Synthetic test fixture for the human approval flow."
+    }]);
     const decision={
       id:randomUUID(),cycle:memory.snapshot().cycle+1,
       action:"publish prototype to production",reason:"Control Panel risk-gate test",
-      expectedOutcome:"Verify high-risk actions require explicit human approval.",
+      expectedOutcome:"Verify high-risk actions stop before explicit human approval and execute only after approval.",
       confidence:.99,risk:"high" as const,approved:false,createdAt:new Date().toISOString(),
-      opportunityId:"control-panel-risk-test",opportunityScore:0,alternatives:[],
-      budgetChf:5,status:"pending_approval" as const
+      opportunityId,opportunityScore:0,alternatives:[],budgetChf:5,status:"pending_approval" as const
     };
     memory.addDecision(decision);
+    // Keep the test fixture aligned with the production execution contract:
+    // approval may expose the action, but execution still requires a persisted spec.
+    createProductSpecification(memory,decision);
     res.writeHead(200,{"content-type":"application/json"});res.end(JSON.stringify({status:"pending_approval",decisionId:decision.id}));return;
   }
   if(req.method==="POST"&&req.url==="/cycle"){

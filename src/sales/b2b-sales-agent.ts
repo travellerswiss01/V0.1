@@ -69,7 +69,7 @@ export class B2BSalesAgent {
       leadId:lead.id,
       channel:"b2b",
       subject:`Idea for ${lead.company}: ${lead.problem}`,
-      body:[contact,"",`I noticed a potential opportunity around ${research.likelyPainPoints[0]}.`,`I am testing a small AI/automation solution that may reduce manual work around this process.`,`If this is relevant, I can show you a short example and estimate the possible time saving.`,"","Best regards"],
+      body:[contact,"",`I noticed a potential opportunity around ${research.likelyPainPoints[0]}.`,`I am testing a small AI/automation solution that may reduce manual work around this process.`,`If this is relevant, I can show you a short example and estimate the possible time saving.`,"","Best regards"].join("\n"),
       requiresApproval:true
     };
   }

@@ -6,12 +6,18 @@ import {join} from "node:path";
 import {Memory} from "./memory.js";
 import {classifyRisk,requiresApproval} from "./policy.js";
 import {executeCodeAgent} from "../agents/code-agent.js";
+import {createProductSpecification} from "../agents/product-spec.js";
 import type {Decision} from "./types.js";
 
 const testDir=mkdtempSync(join(tmpdir(),"v01-approval-"));
 const previousCwd=process.cwd();
 
 const memory=new Memory(100,join(testDir,"company-state.json"));
+memory.setOpportunities([{
+  id:"approval-test",title:"Approval gate prototype",customer:"Test customer",priceChf:5,mvpDays:1,
+  estimatedCostChf:5,competition:"low",automation:90,score:80,rationale:"Deterministic approval-gate fixture."
+}]);
+
 const decision:Decision={
   id:randomUUID(),
   cycle:1,
@@ -41,6 +47,10 @@ const approved=memory.approveDecision(decision.id);
 assert.equal(approved?.status,"approved");
 assert.equal(approved?.approved,true);
 assert.deepEqual(memory.snapshot().pendingApprovals,[]);
+
+// Execution is downstream of the persisted Product Specification gate.
+createProductSpecification(memory,approved!);
+assert.ok(memory.getProductSpecification(approved!.id));
 
 await executeCodeAgent(memory,approved!);
 state=memory.snapshot();

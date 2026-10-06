@@ -27,10 +27,18 @@ export interface CodeReviewArtifact {
 export interface ExecutionResult {
   id:string; decisionId:string; status:"completed"|"blocked"|"failed";
   action:string; startedAt:string; completedAt:string; costChf:number;
+  revenueChf?:number;
   output:string; error?:string; attempt?:number; maxAttempts?:number;
   failureCode?:FailureCode; retryable?:boolean;
   artifacts?:{workspace?:string;files?:string[];checks?:{build:boolean;test:boolean;prototype:boolean};
-    mode?:"ai"|"deterministic";github?:{branch:string;commitSha:string;prNumber:number;prUrl:string}};
+    mode?:"ai"|"deterministic";
+    review?:CodeReviewArtifact;
+    github?:{branch:string;commitSha:string;prNumber:number;prUrl:string}};
+}
+export type GrowthEventType = "lead"|"contact"|"reply"|"qualified"|"offer"|"customer"|"revenue";
+export interface GrowthEvent {
+  id:string; opportunityId:string; channel:"b2b"|"seo"|"social"|"community"|"partnerships"|"paid_ads"; type:GrowthEventType;
+  valueChf?:number; timestamp:string; externalEventId?:string;
 }
 export interface LedgerEntry {
   id:string; timestamp:string;
@@ -40,10 +48,11 @@ export interface LedgerEntry {
 export interface MemoryNote {
   id:string; createdAt:string; category:"learning"|"observation"|"constraint";
   text:string; cycle:number; source:"human"|"system"|"execution";
+  executionId?:string; opportunityId?:string;
 }
 export interface CompanyState {
   schemaVersion:number; updatedAt:string;
   cashChf:number; revenueChf:number; costsChf:number; cycle:number;
   opportunities:Opportunity[]; decisions:Decision[]; executions:ExecutionResult[];
-  pendingApprovals:string[]; ledger:LedgerEntry[]; notes:MemoryNote[];
+  pendingApprovals:string[]; ledger:LedgerEntry[]; notes:MemoryNote[]; specifications:ProductSpecification[]; growthEvents:GrowthEvent[];
 }

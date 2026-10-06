@@ -15,6 +15,7 @@ try{
     acceptanceCriteria:["Create a runnable product prototype workspace.","Document the selected opportunity and intended customer."]
   };
   writeFileSync(join(workspace,"ARCHITECTURE.md"),"# Product Architecture\n\n## Objective\nBuild a safe prototype.\n\n## Constraints\n- MVP only\n");
+  writeFileSync(join(workspace,"index.ts"),"export const product=true;\n");
   const checks={build:true,test:true,prototype:true};
   const result=await automaticFixLoop(task,workspace,checks,3);
   assert.equal(result.approved,true);

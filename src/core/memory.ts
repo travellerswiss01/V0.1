@@ -1,10 +1,10 @@
 import { readFileSync,writeFileSync,existsSync,mkdirSync,renameSync } from "node:fs";
 import {dirname} from "node:path";
 import {randomUUID} from "node:crypto";
-import type {CompanyState,Decision,ExecutionResult,Opportunity,LedgerEntry,MemoryNote} from "./types.js";
+import type {CompanyState,Decision,ExecutionResult,Opportunity,LedgerEntry,MemoryNote,GrowthEvent} from "./types.js";
 import {BudgetPolicy} from "./budget.js";
 
-const SCHEMA_VERSION=2;
+const SCHEMA_VERSION=3;
 
 export class Memory{
   private state:CompanyState; private readonly path:string; private readonly budgetPolicy=new BudgetPolicy();
@@ -25,19 +25,28 @@ export class Memory{
   private emptyState(startingCapital:number):CompanyState{
     return {schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString(),cashChf:startingCapital,
       revenueChf:0,costsChf:0,cycle:0,opportunities:[],decisions:[],executions:[],
-      pendingApprovals:[],ledger:[],notes:[]};
+      pendingApprovals:[],ledger:[],notes:[],specifications:[],growthEvents:[]};
   }
 
   private migrate(input:Partial<CompanyState>,startingCapital:number):CompanyState{
     const base=this.emptyState(startingCapital);
     const migrated:CompanyState={...base,...input,schemaVersion:SCHEMA_VERSION,updatedAt:new Date().toISOString()};
     migrated.opportunities ??=[]; migrated.decisions ??=[]; migrated.executions ??=[];
-    migrated.pendingApprovals ??=[]; migrated.ledger ??=[]; migrated.notes ??=[];
+    migrated.pendingApprovals ??=[]; migrated.ledger ??=[]; migrated.notes ??=[]; migrated.specifications ??=[]; migrated.growthEvents ??=[];
     return migrated;
   }
 
   snapshot(){return structuredClone(this.state);}
   setOpportunities(items:Opportunity[]){this.state.opportunities=structuredClone(items);this.save();}
+  saveProductSpecification(spec:import("./types.js").ProductSpecification){
+    const index=this.state.specifications.findIndex(item=>item.decisionId===spec.decisionId);
+    if(index>=0) this.state.specifications[index]=structuredClone(spec); else this.state.specifications.unshift(structuredClone(spec));
+    this.save(); return structuredClone(spec);
+  }
+  getProductSpecification(decisionId:string){
+    const spec=this.state.specifications.find(item=>item.decisionId===decisionId);
+    return spec?structuredClone(spec):undefined;
+  }
 
   addDecision(d:Decision){
     this.state.decisions.unshift(structuredClone(d));
@@ -49,8 +58,7 @@ export class Memory{
   approveDecision(id:string):Decision|undefined{
     const decision=this.state.decisions.find(item=>item.id===id);
     if(!decision||decision.status!=="pending_approval") return undefined;
-    const authorization=this.budgetPolicy.authorize(this.state,id,decision.budgetChf);
-    if(!authorization.authorized) return undefined;
+    if(decision.budgetChf>this.state.cashChf-this.budgetPolicy.reserved(this.state,id)) return undefined;
     decision.approved=true; decision.status="approved";
     this.appendLedger({type:"decision_approved",decisionId:id,status:"approved",action:decision.action,budgetChf:decision.budgetChf,risk:decision.risk,detail:"Explicit human approval granted within current budget."});
     this.state.pendingApprovals=this.state.pendingApprovals.filter(item=>item!==id);
@@ -63,19 +71,65 @@ export class Memory{
     if(result.status==="completed"){
       const authorization=this.budgetPolicy.authorize(this.state,result.decisionId,result.costChf);
       if(!authorization.authorized) throw new Error(`Budget authorization denied: ${authorization.reason}`);
-      this.state.cashChf-=result.costChf; this.state.costsChf+=result.costChf;
+      this.state.cashChf-=result.costChf;
+      this.state.costsChf+=result.costChf;
     }
     this.state.executions.unshift(structuredClone(result));
     this.state.pendingApprovals=this.state.pendingApprovals.filter(id=>id!==result.decisionId);
     const decision=this.state.decisions.find(d=>d.id===result.decisionId);
     this.appendLedger({type:"execution_recorded",decisionId:result.decisionId,status:result.status,action:result.action,budgetChf:result.costChf,risk:decision?.risk??"low",detail:result.output});
+    this.recordExecutionLearning(result,decision);
     this.save(); return structuredClone(result);
   }
 
-  addNote(category:MemoryNote["category"],text:string,source:MemoryNote["source"]="system"):MemoryNote{
-    const note:MemoryNote={id:randomUUID(),createdAt:new Date().toISOString(),category,text:text.trim(),cycle:this.state.cycle,source};
+  recordGrowthEvent(event:GrowthEvent):GrowthEvent{
+    if(event.valueChf!==undefined && event.valueChf<0) throw new Error("Growth event revenue value cannot be negative.");
+    if(this.state.growthEvents.some(item=>item.id===event.id || (event.externalEventId && item.externalEventId===event.externalEventId))) return structuredClone(this.state.growthEvents.find(item=>item.id===event.id || item.externalEventId===event.externalEventId)!);
+    this.state.growthEvents.unshift(structuredClone(event));
+    if(event.type==="revenue"){ const value=event.valueChf??0; this.state.revenueChf+=value; this.state.cashChf+=value; }
+    this.addNote("learning",`Growth event ${event.type} on ${event.channel}: opportunity ${event.opportunityId}${event.type==="revenue"?`, revenue CHF ${(event.valueChf??0).toFixed(2)}`:""}.`,"system",{opportunityId:event.opportunityId});
+    this.save(); return structuredClone(event);
+  }
+  growthPerformance(opportunityId?:string){
+    const events=this.state.growthEvents.filter(item=>!opportunityId||item.opportunityId===opportunityId);
+    const count=(type:GrowthEvent["type"])=>events.filter(item=>item.type===type).length;
+    return {leads:count("lead"),contacts:count("contact"),replies:count("reply"),qualified:count("qualified"),offers:count("offer"),customers:count("customer"),revenueChf:events.reduce((sum,item)=>sum+(item.type==="revenue"?item.valueChf??0:0),0)};
+  }
+
+  addNote(category:MemoryNote["category"],text:string,source:MemoryNote["source"]="system",meta?:Pick<MemoryNote,"executionId"|"opportunityId">):MemoryNote{
+    const note:MemoryNote={id:randomUUID(),createdAt:new Date().toISOString(),category,text:text.trim(),cycle:this.state.cycle,source,...meta};
     if(!note.text) throw new Error("Memory note cannot be empty.");
     this.state.notes.unshift(note); this.save(); return structuredClone(note);
+  }
+
+  private recordExecutionLearning(result:ExecutionResult,decision?:Decision){
+    const existing=this.state.notes.find(note=>note.executionId===result.id);
+    if(existing) return;
+    const opportunityId=decision?.opportunityId;
+    const opportunity=this.state.opportunities.find(item=>item.id===opportunityId);
+    const history=this.state.executions.filter(item=>item.decisionId===result.decisionId);
+    const attempts=history.length;
+    const successes=history.filter(item=>item.status==="completed").length;
+    const successRate=attempts?successes/attempts:0;
+    const cost=history.reduce((sum,item)=>sum+item.costChf,0);
+    const revenue=this.state.growthEvents.filter(event=>event.opportunityId===opportunityId&&event.type==="revenue").reduce((sum,event)=>sum+Math.max(0,event.valueChf??0),0);
+    const profit=revenue-cost;
+    const roi=cost===0?0:profit/cost;
+    const economics=profit>0?"positive economics":profit<0?"negative economics":"break-even economics";
+    const conclusion=result.status==="completed"
+      ? `Execution completed with ${economics}.`
+      : result.status==="failed"
+        ? "Execution failed; learn before increasing scope or spend."
+        : "Execution was blocked; resolve the blocker before retrying.";
+    const recommendation=result.status==="completed"&&profit>0
+      ? "Repeat or grow the opportunity with a controlled next test."
+      : result.status==="completed"
+        ? "Validate demand or pricing before spending more."
+        : "Investigate the failure or blocker with the cheapest reversible test.";
+    const title=opportunity?.title??decision?.opportunityId??"unknown opportunity";
+    this.addNote("learning",
+      `Execution ${result.id}: opportunity "${title}" (${opportunityId??"unknown"}). Attempts ${attempts}; success rate ${Math.round(successRate*100)}%; cost CHF ${cost.toFixed(2)}; revenue CHF ${revenue.toFixed(2)}; profit CHF ${profit.toFixed(2)}; ROI ${(roi*100).toFixed(1)}%. ${conclusion} Next: ${recommendation}`,
+      "execution",{executionId:result.id,opportunityId});
   }
 
   searchNotes(query:string,limit=10):MemoryNote[]{
@@ -93,6 +147,7 @@ export class Memory{
     this.appendLedger({type:entry.type,decisionId,status:entry.status,action,budgetChf,risk,detail:entry.detail}); this.save();
   }
 
+  getGrowthEvents(opportunityId?:string):GrowthEvent[]{return this.state.growthEvents.filter(item=>!opportunityId||item.opportunityId===opportunityId).map(item=>structuredClone(item));}
   getExecutionByDecisionId(decisionId:string):ExecutionResult|undefined{
     const execution=this.state.executions.find(item=>item.decisionId===decisionId); return execution?structuredClone(execution):undefined;
   }

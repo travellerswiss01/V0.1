@@ -23,20 +23,31 @@ try{
   const blocked=await service.buildProduct("missing-decision");
   assert.equal(blocked.status,"blocked");
 
+  const gateBlocked=await service.buildProduct(decision.id);
+  assert.equal(gateBlocked.status,"blocked");
+  assert.ok("reason" in gateBlocked); assert.match(gateBlocked.reason,/Product specification gate failed/);
+
   const spec=service.createProductSpec(decision.id);
+  assert.ok(memory.snapshot().specifications.some(item=>item.decisionId===decision.id));
   assert.equal(spec.pricingChf,opportunities[0].priceChf);
   assert.ok(spec.acceptanceCriteria.length>=4);
 
   const built=await service.buildProduct(decision.id);
   assert.equal(built.status,"completed");
-  assert.equal(built.artifacts?.checks?.build,true);
-  assert.equal(built.artifacts?.checks?.prototype,true);
+  assert.ok("artifacts" in built); assert.equal(built.artifacts?.checks?.build,true);
+  assert.ok("artifacts" in built); assert.equal(built.artifacts?.checks?.prototype,true);
 
   const tests=service.runTests(decision.id);
   assert.equal(tests.status,"completed");
 
   const published=service.publish(decision.id);
   assert.equal(published.status,"blocked");
+
+  const growth=service.prepareGrowth(opportunities[0].id,"Swiss SMBs","Test offer");
+  assert.equal(growth.status,"prepared");
+  memory.recordGrowthEvent({id:"growth-test",opportunityId:opportunities[0].id,channel:"b2b",type:"lead",timestamp:new Date().toISOString()});
+  memory.recordGrowthEvent({id:"revenue-test",opportunityId:opportunities[0].id,channel:"b2b",type:"revenue",valueChf:25,timestamp:new Date().toISOString(),externalEventId:"external-25"});
+  assert.equal(memory.growthPerformance(opportunities[0].id).revenueChf,25);
 
   const measurement=service.measure();
   assert.equal(measurement.completedExecutions,1);
