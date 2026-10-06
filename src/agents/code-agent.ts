@@ -116,12 +116,14 @@ function validatePrototype(workspace:string):{build:boolean;test:boolean;prototy
   const tsFiles=listFiles(workspace).filter(file=>file.endsWith(".ts"));
   if(tsFiles.length===0) throw new Error("Prototype validation failed: no TypeScript source was created.");
 
-  execFileSync("npx",[
-    "tsc","--noEmit","--target","ES2022","--module","NodeNext","--moduleResolution","NodeNext",...tsFiles
-  ],{cwd:workspace,stdio:"pipe",timeout:120000});
+  const tscBin=join(repositoryRoot,"node_modules","typescript","bin","tsc");
+  execFileSync(process.execPath,[
+    tscBin,"--noEmit","--target","ES2022","--module","NodeNext","--moduleResolution","NodeNext",...tsFiles.map(file=>join(workspace,file))
+  ],{cwd:repositoryRoot,stdio:"pipe",timeout:120000});
   prototype=true;
 
-  execFileSync("npx",["tsx","prototype.test.ts"],{cwd:workspace,stdio:"pipe",timeout:120000});
+  const tsxCli=join(repositoryRoot,"node_modules","tsx","dist","cli.mjs");
+  execFileSync(process.execPath,[tsxCli,join(workspace,"prototype.test.ts")],{cwd:repositoryRoot,stdio:"pipe",timeout:120000});
   test=true;
 
   return {build,test,prototype};
