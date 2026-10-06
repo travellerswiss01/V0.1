@@ -57,6 +57,13 @@ export async function runCeoCycle(memory:Memory):Promise<Decision> {
   };
   memory.addDecision(decision);
 
+  // Product specification is a prerequisite for prototype execution, including
+  // decisions that require later human approval. Persist it before approval so
+  // the approval path cannot reach execution with an incomplete build contract.
+  if(decision.status!=="rejected" && strategy.priority!=="grow"){
+    createProductSpecification(memory,decision);
+  }
+
   if(decision.status==="approved"){
     if(strategy.priority==="grow"){
       const growth=new GrowthAgent().prepare({
@@ -72,7 +79,6 @@ export async function runCeoCycle(memory:Memory):Promise<Decision> {
         `CEO selected growth for opportunity "${top.title}". Growth status: ${growth.status}. ${growth.reason}`,
         "system",{opportunityId:top.id});
     }else{
-      createProductSpecification(memory,decision);
       await executeCodeAgent(memory,decision);
     }
   }
