@@ -120,7 +120,8 @@ export function deriveCeoStrategy(state:CompanyState):CeoStrategy {
         if(provenSuccesses.has(opportunity.id)) score+=10;
         if(provenGrowth.has(opportunity.id)) score+=15;
         if(history.successRate>0) score+=Math.min(20,history.successRate*20);
-        score-=Math.min(12,history.attempts*3);
+        // Apply a meaningful exploration penalty so repeated validation does not crowd out untested opportunities indefinitely.
+        score-=Math.min(30,history.attempts*8);
         if(history.averageCostChf>opportunity.estimatedCostChf){
           score-=Math.min(15,(history.averageCostChf-opportunity.estimatedCostChf)*2);
         }
