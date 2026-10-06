@@ -139,10 +139,26 @@ createServer(async(req,res)=>{
     res.writeHead(303,{location:"/control"}); res.end(); return;
   }
   if(req.method==="POST"&&req.url==="/api/execute"){
-    const body=await readBody(req); const payload=JSON.parse(body||"{}");
-    const decision=memory.snapshot().decisions.find(d=>d.id===payload.decisionId);
+    const body=await readBody(req);
+    let payload:unknown;
+    try{payload=JSON.parse(body||"{}");}catch{
+      res.writeHead(400,{"content-type":"application/json"});res.end(JSON.stringify({error:"Invalid JSON"}));return;
+    }
+    const decisionId=typeof payload==="object"&&payload!==null&&"decisionId" in payload
+      && typeof (payload as {decisionId?:unknown}).decisionId==="string"
+      ? (payload as {decisionId:string}).decisionId : undefined;
+    if(!decisionId){
+      res.writeHead(400,{"content-type":"application/json"});res.end(JSON.stringify({error:"decisionId required"}));return;
+    }
+    const decision=memory.snapshot().decisions.find(d=>d.id===decisionId);
     if(!decision){res.writeHead(404,{"content-type":"application/json"});res.end(JSON.stringify({error:"Decision not found"}));return;}
-    const result=executeDecision(memory,decision);
+    if(decision.status!=="approved"||!decision.approved){
+      res.writeHead(403,{"content-type":"application/json"});res.end(JSON.stringify({error:"Decision is not approved"}));return;
+    }
+    if(!memory.getProductSpecification(decision.id)){
+      res.writeHead(409,{"content-type":"application/json"});res.end(JSON.stringify({error:"Product specification gate failed: no persisted specification exists for this decision"}));return;
+    }
+    const result=await executeCodeAgent(memory,decision);
     res.writeHead(200,{"content-type":"application/json"});res.end(JSON.stringify(result));return;
   }
   if(req.method==="POST"&&req.url==="/api/ai-ceo"){
