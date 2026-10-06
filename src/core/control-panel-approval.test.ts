@@ -33,6 +33,14 @@ try{
   assert.equal(state.pendingApprovals.length,1);
   assert.equal(state.executions.length,0);
 
+  const directBeforeApproval=await fetch(base+"/api/execute",{
+    method:"POST",
+    headers:{"content-type":"application/json"},
+    body:JSON.stringify({decisionId:pending.decisionId})
+  });
+  assert.equal(directBeforeApproval.status,403,"Execution API must reject unapproved decisions.");
+  assert.equal((await directBeforeApproval.json()).error,"Decision is not approved");
+
   const page=await (await fetch(base+"/control")).text();
   assert.match(page,/Approve & Execute/);
 
@@ -51,7 +59,18 @@ try{
   assert.equal(state.executions[0].status,"completed");
   assert.equal(state.executions[0].decisionId,pending.decisionId);
 
-  console.log(JSON.stringify({status:"passed",pendingBeforeApproval:true,executedAfterApproval:true},null,2));
+  const duplicateExecution=await fetch(base+"/api/execute",{
+    method:"POST",
+    headers:{"content-type":"application/json"},
+    body:JSON.stringify({decisionId:pending.decisionId})
+  });
+  assert.equal(duplicateExecution.status,200,"Approved execution API must remain idempotent.");
+  const duplicateResult=await duplicateExecution.json() as any;
+  assert.equal(duplicateResult.decisionId,pending.decisionId);
+  state=await (await fetch(base+"/api/state")).json() as any;
+  assert.equal(state.executions.length,1,"Repeated execution must not create a second execution record.");
+
+  console.log(JSON.stringify({status:"passed",pendingBeforeApproval:true,blockedDirectExecution:true,executedAfterApproval:true,idempotentExecution:true},null,2));
 } finally {
   if(child.pid){
     try{process.kill(-child.pid,"SIGTERM");}catch{}
