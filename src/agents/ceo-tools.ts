@@ -117,6 +117,7 @@ export class CeoToolService {
     const decision=this.memory.snapshot().decisions.find(item=>item.id===decisionId);
     if(!decision) return {status:"blocked",reason:"Decision not found."};
     if(decision.status!=="approved"||!decision.approved) return {status:"blocked",reason:"Decision is not approved."};
+    if(!this.memory.getProductSpecification(decision.id)) return {status:"blocked",reason:"Product specification gate failed: no persisted specification exists for this decision."};
     return await executeCodeAgent(this.memory,decision);
   }
 
