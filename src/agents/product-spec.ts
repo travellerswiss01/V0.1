@@ -1,6 +1,16 @@
 import type {Decision,Opportunity,ProductSpecification} from "../core/types.js";
 import {Memory} from "../core/memory.js";
 
+export function validateProductSpecification(decision:Decision,spec:ProductSpecification|undefined):string|undefined{
+  if(!spec) return "Product specification gate failed: no persisted specification exists for this decision.";
+  if(spec.decisionId!==decision.id) return "Product specification gate failed: specification does not belong to this decision.";
+  if(spec.opportunityId!==decision.opportunityId) return "Product specification gate failed: specification does not match the decision opportunity.";
+  if(!Array.isArray(spec.acceptanceCriteria)||spec.acceptanceCriteria.length===0||spec.acceptanceCriteria.some(item=>typeof item!=="string"||!item.trim())){
+    return "Product specification gate failed: non-empty acceptance criteria are required.";
+  }
+  return undefined;
+}
+
 export function createProductSpecification(memory:Memory,decision:Decision):ProductSpecification{
   const opportunity=memory.snapshot().opportunities.find(item=>item.id===decision.opportunityId);
   if(!opportunity) throw new Error("Opportunity not found for product specification.");
