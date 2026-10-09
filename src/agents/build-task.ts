@@ -1,5 +1,5 @@
 import type {Decision} from "../core/types.js";
-import {specificationToPrompt} from "./product-spec.js";
+import {specificationToPrompt,validateProductSpecification} from "./product-spec.js";
 import {Memory} from "../core/memory.js";
 
 export interface BuildTask {
@@ -12,19 +12,9 @@ export function createBuildTask(decision:Decision,memory:Memory):BuildTask {
   }
 
   const spec=memory.getProductSpecification(decision.id);
+  const specificationError=validateProductSpecification(decision,spec);
+  if(specificationError) throw new Error(specificationError);
   if(!spec) throw new Error("Product specification gate failed: no persisted specification exists for this decision.");
-
-  if(spec.decisionId!==decision.id){
-    throw new Error("Product specification gate failed: specification does not belong to this decision.");
-  }
-
-  if(spec.opportunityId!==decision.opportunityId){
-    throw new Error("Product specification gate failed: specification does not match the decision opportunity.");
-  }
-
-  if(!spec.acceptanceCriteria.length){
-    throw new Error("Product specification gate failed: acceptance criteria are required.");
-  }
 
   return {
     id:decision.id,
